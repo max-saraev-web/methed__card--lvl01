@@ -186,6 +186,11 @@
   padding: 20px 92px;
   margin: 0 auto;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+.form__button:disabled{
+  filter: grayscale(100%);
+  cursor: not-allowed;
 }
 
 .input__holder {
