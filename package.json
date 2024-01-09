@@ -10,6 +10,10 @@
   "author": "max",
   "license": "ISC",
   "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "air-datepicker": "^3.4.0",
+    "bootstrap": "^5.3.2",
+    "credit-card-input-mask": "^3.0.0",
     "redom": "^4.0.0"
   },
   "devDependencies": {
