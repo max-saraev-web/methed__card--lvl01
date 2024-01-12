@@ -29,12 +29,14 @@ const checkOutControl = parent => {
   });
 
   dateInput.addEventListener('click', ({target}) => {
-    new AirDatepicker(target, {
+    const picker = new AirDatepicker(target, {
       view: 'months',
       minView: 'months',
       dateFormat: 'MM yy',
     });
+    picker.show();
   });
+
   const isDate = new Promise(resolve => {
     dateInput.addEventListener('blur', ({target}) => {
       target.value = target.value.replace(/\s/g, '/');
