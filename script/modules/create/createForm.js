@@ -23,8 +23,8 @@ const createInputGroup = (wrapClass, name, text) => {
 
 const createBtn = text => {
   const btn = el('button.form__button', `${text}`, {
-    type: 'submit',
     disabled: true,
+    type: 'submit',
   });
   return btn;
 };
@@ -39,9 +39,14 @@ const createForm = () => {
   const number = createInputGroup('number', 'number', 'Card Number');
   const date = createInputGroup('date', 'date', 'Card Expiry');
   const cvv = createInputGroup('cvv', 'cvv', 'CVV');
+  const sendBtn = el('button', {
+    type: 'button',
+    className: 'form__button form__sendBtn',
+    textContent: 'ОТПРАВИТЬ',
+  });
   const btn = createBtn('CHECK OUT');
 
-  setChildren(formContainer, owner, number, date, cvv, btn);
+  setChildren(formContainer, owner, number, date, cvv, sendBtn, btn);
 
   return {
     formContainer,
@@ -49,6 +54,7 @@ const createForm = () => {
     number,
     date,
     cvv,
+    sendBtn,
     btn,
   };
 };

@@ -65,7 +65,7 @@
   padding: 48px 25px 30px;
   margin-bottom: 10px;
   margin-bottom: 30px;
-
+  min-height: 200px;
 }
 
 .logos {
@@ -192,6 +192,25 @@
 .form__button:disabled{
   filter: grayscale(100%);
   cursor: not-allowed;
+}
+.form__sendBtn {
+  margin-bottom: 14px;
+  transition: all 0.5s;
+}
+.form__warning {
+  font-size: 12px;
+  color: tomato;
+  font-weight: bold;
+  position: absolute;
+  bottom: 0;
+  transform: translateY(125%);
+  text-align: left;
+  width: 110%;
+}
+@media (min-width: 1024px) {
+  .form__sendBtn:hover {
+    scale: 1.02;
+  }
 }
 
 .input__holder {

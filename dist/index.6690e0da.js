@@ -73,7 +73,7 @@
         localRequire,
         module,
         module.exports,
-        this
+        globalObject
       );
     }
 
@@ -142,15 +142,16 @@
       this[globalName] = mainExports;
     }
   }
-})({"cygyY":[function(require,module,exports) {
+})({"faLUp":[function(require,module,exports,__globalThis) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
 var HMR_SECURE = false;
 var HMR_ENV_HASH = "d6ea1d42532a7575";
+var HMR_USE_SSE = false;
 module.bundle.HMR_BUNDLE_ID = "04c3a0646690e0da";
 "use strict";
-/* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, chrome, browser, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
+/* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, HMR_USE_SSE, chrome, browser, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
 import type {
   HMRAsset,
   HMRMessage,
@@ -189,13 +190,14 @@ declare var HMR_HOST: string;
 declare var HMR_PORT: string;
 declare var HMR_ENV_HASH: string;
 declare var HMR_SECURE: boolean;
+declare var HMR_USE_SSE: boolean;
 declare var chrome: ExtensionContext;
 declare var browser: ExtensionContext;
 declare var __parcel__import__: (string) => Promise<void>;
 declare var __parcel__importScripts__: (string) => Promise<void>;
 declare var globalThis: typeof self;
 declare var ServiceWorkerGlobalScope: Object;
-*/ var OVERLAY_ID = "__parcel__error__overlay__";
+*/ var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
 function Module(moduleName) {
     OldModule.call(this, moduleName);
@@ -214,66 +216,65 @@ function Module(moduleName) {
 }
 module.bundle.Module = Module;
 module.bundle.hotData = {};
-var checkedAssets /*: {|[string]: boolean|} */ , assetsToDispose /*: Array<[ParcelRequire, string]> */ , assetsToAccept /*: Array<[ParcelRequire, string]> */ ;
+var checkedAssets /*: {|[string]: boolean|} */ , disposedAssets /*: {|[string]: boolean|} */ , assetsToDispose /*: Array<[ParcelRequire, string]> */ , assetsToAccept /*: Array<[ParcelRequire, string]> */ ;
 function getHostname() {
-    return HMR_HOST || (location.protocol.indexOf("http") === 0 ? location.hostname : "localhost");
+    return HMR_HOST || (location.protocol.indexOf('http') === 0 ? location.hostname : 'localhost');
 }
 function getPort() {
     return HMR_PORT || location.port;
 }
 // eslint-disable-next-line no-redeclare
 var parent = module.bundle.parent;
-if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== "undefined") {
+if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
     var hostname = getHostname();
     var port = getPort();
-    var protocol = HMR_SECURE || location.protocol == "https:" && !/localhost|127.0.0.1|0.0.0.0/.test(hostname) ? "wss" : "ws";
+    var protocol = HMR_SECURE || location.protocol == 'https:' && ![
+        'localhost',
+        '127.0.0.1',
+        '0.0.0.0'
+    ].includes(hostname) ? 'wss' : 'ws';
     var ws;
-    try {
-        ws = new WebSocket(protocol + "://" + hostname + (port ? ":" + port : "") + "/");
+    if (HMR_USE_SSE) ws = new EventSource('/__parcel_hmr');
+    else try {
+        ws = new WebSocket(protocol + '://' + hostname + (port ? ':' + port : '') + '/');
     } catch (err) {
         if (err.message) console.error(err.message);
         ws = {};
     }
     // Web extension context
-    var extCtx = typeof browser === "undefined" ? typeof chrome === "undefined" ? null : chrome : browser;
+    var extCtx = typeof browser === 'undefined' ? typeof chrome === 'undefined' ? null : chrome : browser;
     // Safari doesn't support sourceURL in error stacks.
     // eval may also be disabled via CSP, so do a quick check.
     var supportsSourceURL = false;
     try {
         (0, eval)('throw new Error("test"); //# sourceURL=test.js');
     } catch (err) {
-        supportsSourceURL = err.stack.includes("test.js");
+        supportsSourceURL = err.stack.includes('test.js');
     }
     // $FlowFixMe
     ws.onmessage = async function(event /*: {data: string, ...} */ ) {
         checkedAssets = {} /*: {|[string]: boolean|} */ ;
+        disposedAssets = {} /*: {|[string]: boolean|} */ ;
         assetsToAccept = [];
         assetsToDispose = [];
         var data /*: HMRMessage */  = JSON.parse(event.data);
-        if (data.type === "update") {
+        if (data.type === 'reload') fullReload();
+        else if (data.type === 'update') {
             // Remove error overlay if there is one
-            if (typeof document !== "undefined") removeErrorOverlay();
+            if (typeof document !== 'undefined') removeErrorOverlay();
             let assets = data.assets.filter((asset)=>asset.envHash === HMR_ENV_HASH);
             // Handle HMR Update
             let handled = assets.every((asset)=>{
-                return asset.type === "css" || asset.type === "js" && hmrAcceptCheck(module.bundle.root, asset.id, asset.depsByBundle);
+                return asset.type === 'css' || asset.type === 'js' && hmrAcceptCheck(module.bundle.root, asset.id, asset.depsByBundle);
             });
             if (handled) {
                 console.clear();
                 // Dispatch custom event so other runtimes (e.g React Refresh) are aware.
-                if (typeof window !== "undefined" && typeof CustomEvent !== "undefined") window.dispatchEvent(new CustomEvent("parcelhmraccept"));
+                if (typeof window !== 'undefined' && typeof CustomEvent !== 'undefined') window.dispatchEvent(new CustomEvent('parcelhmraccept'));
                 await hmrApplyUpdates(assets);
-                // Dispose all old assets.
-                let processedAssets = {} /*: {|[string]: boolean|} */ ;
-                for(let i = 0; i < assetsToDispose.length; i++){
-                    let id = assetsToDispose[i][1];
-                    if (!processedAssets[id]) {
-                        hmrDispose(assetsToDispose[i][0], id);
-                        processedAssets[id] = true;
-                    }
-                }
+                hmrDisposeQueue();
                 // Run accept callbacks. This will also re-execute other disposed assets in topological order.
-                processedAssets = {};
+                let processedAssets = {};
                 for(let i = 0; i < assetsToAccept.length; i++){
                     let id = assetsToAccept[i][1];
                     if (!processedAssets[id]) {
@@ -283,13 +284,13 @@ if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== "undefined") {
                 }
             } else fullReload();
         }
-        if (data.type === "error") {
+        if (data.type === 'error') {
             // Log parcel errors to console
             for (let ansiDiagnostic of data.diagnostics.ansi){
                 let stack = ansiDiagnostic.codeframe ? ansiDiagnostic.codeframe : ansiDiagnostic.stack;
-                console.error("\uD83D\uDEA8 [parcel]: " + ansiDiagnostic.message + "\n" + stack + "\n\n" + ansiDiagnostic.hints.join("\n"));
+                console.error("\uD83D\uDEA8 [parcel]: " + ansiDiagnostic.message + '\n' + stack + '\n\n' + ansiDiagnostic.hints.join('\n'));
             }
-            if (typeof document !== "undefined") {
+            if (typeof document !== 'undefined') {
                 // Render the fancy html overlay
                 removeErrorOverlay();
                 var overlay = createErrorOverlay(data.diagnostics.html);
@@ -298,12 +299,14 @@ if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== "undefined") {
             }
         }
     };
-    ws.onerror = function(e) {
-        if (e.message) console.error(e.message);
-    };
-    ws.onclose = function() {
-        console.warn("[parcel] \uD83D\uDEA8 Connection to the HMR server was lost");
-    };
+    if (ws instanceof WebSocket) {
+        ws.onerror = function(e) {
+            if (e.message) console.error(e.message);
+        };
+        ws.onclose = function() {
+            console.warn("[parcel] \uD83D\uDEA8 Connection to the HMR server was lost");
+        };
+    }
 }
 function removeErrorOverlay() {
     var overlay = document.getElementById(OVERLAY_ID);
@@ -313,7 +316,7 @@ function removeErrorOverlay() {
     }
 }
 function createErrorOverlay(diagnostics) {
-    var overlay = document.createElement("div");
+    var overlay = document.createElement('div');
     overlay.id = OVERLAY_ID;
     let errorHTML = '<div style="background: black; opacity: 0.85; font-size: 16px; color: white; position: fixed; height: 100%; width: 100%; top: 0px; left: 0px; padding: 30px; font-family: Menlo, Consolas, monospace; z-index: 9999;">';
     for (let diagnostic of diagnostics){
@@ -321,7 +324,7 @@ function createErrorOverlay(diagnostics) {
             return `${p}
 <a href="/__parcel_launch_editor?file=${encodeURIComponent(frame.location)}" style="text-decoration: underline; color: #888" onclick="fetch(this.href); return false">${frame.location}</a>
 ${frame.code}`;
-        }, "") : diagnostic.stack;
+        }, '') : diagnostic.stack;
         errorHTML += `
       <div>
         <div style="font-size: 18px; font-weight: bold; margin-top: 20px;">
@@ -329,18 +332,18 @@ ${frame.code}`;
         </div>
         <pre>${stack}</pre>
         <div>
-          ${diagnostic.hints.map((hint)=>"<div>\uD83D\uDCA1 " + hint + "</div>").join("")}
+          ${diagnostic.hints.map((hint)=>"<div>\uD83D\uDCA1 " + hint + '</div>').join('')}
         </div>
-        ${diagnostic.documentation ? `<div>\u{1F4DD} <a style="color: violet" href="${diagnostic.documentation}" target="_blank">Learn more</a></div>` : ""}
+        ${diagnostic.documentation ? `<div>\u{1F4DD} <a style="color: violet" href="${diagnostic.documentation}" target="_blank">Learn more</a></div>` : ''}
       </div>
     `;
     }
-    errorHTML += "</div>";
+    errorHTML += '</div>';
     overlay.innerHTML = errorHTML;
     return overlay;
 }
 function fullReload() {
-    if ("reload" in location) location.reload();
+    if ('reload' in location) location.reload();
     else if (extCtx && extCtx.runtime && extCtx.runtime.reload) extCtx.runtime.reload();
 }
 function getParents(bundle, id) /*: Array<[ParcelRequire, string]> */ {
@@ -359,15 +362,15 @@ function getParents(bundle, id) /*: Array<[ParcelRequire, string]> */ {
     return parents;
 }
 function updateLink(link) {
-    var href = link.getAttribute("href");
+    var href = link.getAttribute('href');
     if (!href) return;
     var newLink = link.cloneNode();
     newLink.onload = function() {
         if (link.parentNode !== null) // $FlowFixMe
         link.parentNode.removeChild(link);
     };
-    newLink.setAttribute("href", // $FlowFixMe
-    href.split("?")[0] + "?" + Date.now());
+    newLink.setAttribute('href', // $FlowFixMe
+    href.split('?')[0] + '?' + Date.now());
     // $FlowFixMe
     link.parentNode.insertBefore(newLink, link.nextSibling);
 }
@@ -378,9 +381,9 @@ function reloadCSS() {
         var links = document.querySelectorAll('link[rel="stylesheet"]');
         for(var i = 0; i < links.length; i++){
             // $FlowFixMe[incompatible-type]
-            var href /*: string */  = links[i].getAttribute("href");
+            var href /*: string */  = links[i].getAttribute('href');
             var hostname = getHostname();
-            var servedFromHMRServer = hostname === "localhost" ? new RegExp("^(https?:\\/\\/(0.0.0.0|127.0.0.1)|localhost):" + getPort()).test(href) : href.indexOf(hostname + ":" + getPort());
+            var servedFromHMRServer = hostname === 'localhost' ? new RegExp('^(https?:\\/\\/(0.0.0.0|127.0.0.1)|localhost):' + getPort()).test(href) : href.indexOf(hostname + ':' + getPort());
             var absolute = /^https?:\/\//i.test(href) && href.indexOf(location.origin) !== 0 && !servedFromHMRServer;
             if (!absolute) updateLink(links[i]);
         }
@@ -388,23 +391,23 @@ function reloadCSS() {
     }, 50);
 }
 function hmrDownload(asset) {
-    if (asset.type === "js") {
-        if (typeof document !== "undefined") {
-            let script = document.createElement("script");
-            script.src = asset.url + "?t=" + Date.now();
-            if (asset.outputFormat === "esmodule") script.type = "module";
+    if (asset.type === 'js') {
+        if (typeof document !== 'undefined') {
+            let script = document.createElement('script');
+            script.src = asset.url + '?t=' + Date.now();
+            if (asset.outputFormat === 'esmodule') script.type = 'module';
             return new Promise((resolve, reject)=>{
                 var _document$head;
                 script.onload = ()=>resolve(script);
                 script.onerror = reject;
                 (_document$head = document.head) === null || _document$head === void 0 || _document$head.appendChild(script);
             });
-        } else if (typeof importScripts === "function") {
+        } else if (typeof importScripts === 'function') {
             // Worker scripts
-            if (asset.outputFormat === "esmodule") return import(asset.url + "?t=" + Date.now());
+            if (asset.outputFormat === 'esmodule') return import(asset.url + '?t=' + Date.now());
             else return new Promise((resolve, reject)=>{
                 try {
-                    importScripts(asset.url + "?t=" + Date.now());
+                    importScripts(asset.url + '?t=' + Date.now());
                     resolve();
                 } catch (err) {
                     reject(err);
@@ -428,7 +431,7 @@ async function hmrApplyUpdates(assets) {
                 var _hmrDownload;
                 return (_hmrDownload = hmrDownload(asset)) === null || _hmrDownload === void 0 ? void 0 : _hmrDownload.catch((err)=>{
                     // Web extension fix
-                    if (extCtx && extCtx.runtime && extCtx.runtime.getManifest().manifest_version == 3 && typeof ServiceWorkerGlobalScope != "undefined" && global instanceof ServiceWorkerGlobalScope) {
+                    if (extCtx && extCtx.runtime && extCtx.runtime.getManifest().manifest_version == 3 && typeof ServiceWorkerGlobalScope != 'undefined' && global instanceof ServiceWorkerGlobalScope) {
                         extCtx.runtime.reload();
                         return;
                     }
@@ -453,8 +456,8 @@ async function hmrApplyUpdates(assets) {
 function hmrApply(bundle /*: ParcelRequire */ , asset /*:  HMRAsset */ ) {
     var modules = bundle.modules;
     if (!modules) return;
-    if (asset.type === "css") reloadCSS();
-    else if (asset.type === "js") {
+    if (asset.type === 'css') reloadCSS();
+    else if (asset.type === 'js') {
         let deps = asset.depsByBundle[bundle.HMR_BUNDLE_ID];
         if (deps) {
             if (modules[asset.id]) {
@@ -476,7 +479,10 @@ function hmrApply(bundle /*: ParcelRequire */ , asset /*:  HMRAsset */ ) {
                 fn,
                 deps
             ];
-        } else if (bundle.parent) hmrApply(bundle.parent, asset);
+        }
+        // Always traverse to the parent bundle, even if we already replaced the asset in this bundle.
+        // This is required in case modules are duplicated. We need to ensure all instances have the updated code.
+        if (bundle.parent) hmrApply(bundle.parent, asset);
     }
 }
 function hmrDelete(bundle, id) {
@@ -546,6 +552,17 @@ function hmrAcceptCheckOne(bundle /*: ParcelRequire */ , id /*: string */ , deps
         return true;
     }
 }
+function hmrDisposeQueue() {
+    // Dispose all old assets.
+    for(let i = 0; i < assetsToDispose.length; i++){
+        let id = assetsToDispose[i][1];
+        if (!disposedAssets[id]) {
+            hmrDispose(assetsToDispose[i][0], id);
+            disposedAssets[id] = true;
+        }
+    }
+    assetsToDispose = [];
+}
 function hmrDispose(bundle /*: ParcelRequire */ , id /*: string */ ) {
     var cached = bundle.cache[id];
     bundle.hotData[id] = {};
@@ -560,33 +577,37 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
     bundle(id);
     // Run the accept callbacks in the new version of the module.
     var cached = bundle.cache[id];
-    if (cached && cached.hot && cached.hot._acceptCallbacks.length) cached.hot._acceptCallbacks.forEach(function(cb) {
-        var assetsToAlsoAccept = cb(function() {
-            return getParents(module.bundle.root, id);
-        });
-        if (assetsToAlsoAccept && assetsToAccept.length) {
-            assetsToAlsoAccept.forEach(function(a) {
-                hmrDispose(a[0], a[1]);
+    if (cached && cached.hot && cached.hot._acceptCallbacks.length) {
+        let assetsToAlsoAccept = [];
+        cached.hot._acceptCallbacks.forEach(function(cb) {
+            let additionalAssets = cb(function() {
+                return getParents(module.bundle.root, id);
             });
-            // $FlowFixMe[method-unbinding]
-            assetsToAccept.push.apply(assetsToAccept, assetsToAlsoAccept);
+            if (Array.isArray(additionalAssets) && additionalAssets.length) assetsToAlsoAccept.push(...additionalAssets);
+        });
+        if (assetsToAlsoAccept.length) {
+            let handled = assetsToAlsoAccept.every(function(a) {
+                return hmrAcceptCheck(a[0], a[1]);
+            });
+            if (!handled) return fullReload();
+            hmrDisposeQueue();
         }
-    });
+    }
 }
 
-},{}],"2OpUZ":[function(require,module,exports) {
+},{}],"2OpUZ":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 var _checkOutControl = require("./modules/control/checkOutControl");
 var _checkOutControlDefault = parcelHelpers.interopDefault(_checkOutControl);
-const cardBody = document.querySelector(".card");
-document.addEventListener("DOMContentLoaded", ()=>{
+const cardBody = document.querySelector('.card');
+document.addEventListener('DOMContentLoaded', ()=>{
     const init = ()=>{
         (0, _checkOutControlDefault.default)(cardBody);
     };
     init();
 });
 
-},{"./modules/control/checkOutControl":"9K5a1","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9K5a1":[function(require,module,exports) {
+},{"./modules/control/checkOutControl":"9K5a1","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9K5a1":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _redom = require("redom");
@@ -600,80 +621,119 @@ var _creditCardInputMask = require("credit-card-input-mask");
 var _creditCardInputMaskDefault = parcelHelpers.interopDefault(_creditCardInputMask);
 var _airDatepicker = require("air-datepicker");
 var _airDatepickerDefault = parcelHelpers.interopDefault(_airDatepicker);
+var _validateCard = require("../utility/validateCard");
+var _validateCardDefault = parcelHelpers.interopDefault(_validateCard);
 const checkOutControl = (parent)=>{
     const p = (0, _createCheckoutLabelDefault.default)();
     const { card, number: cardNum, cardName, cardDate } = (0, _createCreditCardDefault.default)();
-    const { formContainer, owner, number, date, cvv, btn } = (0, _createFormDefault.default)();
-    const matrix = "xxxx xxxx xxxx xxxx";
-    const dateInput = date.querySelector("input");
-    const cvvInput = cvv.querySelector("input");
+    const { formContainer, owner, number, date, cvv, sendBtn, btn } = (0, _createFormDefault.default)();
+    const matrix = 'xxxx xxxx xxxx xxxx';
+    const dateInput = date.querySelector('input');
+    const cvvInput = cvv.querySelector('input');
+    const nameInput = owner.querySelector('input');
     // ! Функионал
-    const numberInput = number.querySelector("input");
-    numberInput.addEventListener("focus", ({ target })=>{
-        if (target.value.length === 0) target.value = "xxxx xxxx xxxx xxxx";
+    const numberInput = number.querySelector('input');
+    numberInput.addEventListener('focus', ({ target })=>{
+        if (target.value.length === 0) target.value = 'xxxx xxxx xxxx xxxx';
     });
-    dateInput.addEventListener("click", ({ target })=>{
+    // ? Имя, начало
+    nameInput.addEventListener('input', ({ target })=>{
+        const matrix = 'John Doe';
+        target.value = target.value.replace(/[^a-z\s]/gim, '');
+        cardName.textContent = target.value;
+        if (target.value.length === 0) cardName.textContent = matrix;
+    });
+    // ? Имя, конец
+    dateInput.addEventListener('click', ({ target })=>{
         const picker = new (0, _airDatepickerDefault.default)(target, {
-            view: "months",
-            minView: "months",
-            dateFormat: "MM yy"
+            view: 'months',
+            minView: 'months',
+            dateFormat: 'MM yy'
         });
         picker.show();
     });
-    const isDate = new Promise((resolve)=>{
-        dateInput.addEventListener("blur", ({ target })=>{
-            target.value = target.value.replace(/\s/g, "/");
-            cardDate.textContent = target.value;
-            if (/(\d{2})\/(\d{2})/.test(target.value)) {
-                console.log("date - resolved");
-                resolve();
-            }
-        });
+    dateInput.addEventListener('blur', ({ target })=>{
+        target.value = target.value.replace(/\s/g, '/');
+        cardDate.textContent = target.value;
     });
-    const isName = new Promise((resolve)=>{
-        let isTyping;
-        let isPending = true;
-        clearTimeout(isTyping);
-        const nameInput = owner.querySelector("input");
-        nameInput.addEventListener("input", ({ target })=>{
-            const matrix = "John Doe";
-            target.value = target.value.replace(/[^a-z\s]/gim, "");
-            cardName.textContent = target.value;
-            if (target.value.length === 0) cardName.textContent = matrix;
-            isTyping = setTimeout(()=>{
-                if (/\w\s{1}\w/i.test(target.value) && isPending) {
-                    isPending = false;
-                    clearTimeout(isTyping);
-                    resolve();
-                }
-            }, 7000);
-        });
+    cvvInput.addEventListener('input', ({ target })=>{
+        target.value = target.value.replace(/\D/, '');
+        target.value = target.value.slice(0, 3);
     });
-    const isNum = new Promise((resolve)=>{
-        numberInput.addEventListener("input", ({ target })=>{
-            new (0, _creditCardInputMaskDefault.default)({
-                element: target,
-                pattern: "{{9999}} {{9999}} {{9999}} {{9999}}"
-            });
-            target.value = target.value + matrix.slice(target.value.length);
-            cardNum.textContent = target.value + matrix.slice(target.value.length);
-            if (/(\d{4}\s{1}){3}(\d{4}){1}/gim.test(target.value)) resolve();
-        });
+    // const isDate = new Promise(resolve => {
+    //   dateInput.addEventListener('blur', ({target}) => {
+    //     target.value = target.value.replace(/\s/g, '/');
+    //     cardDate.textContent = target.value;
+    //     if (/(\d{2})\/(\d{2})/.test(target.value)) {
+    //       console.log('date - resolved');
+    //       resolve();
+    //     };
+    //   });
+    // });
+    // const isName = new Promise(resolve => {
+    //   let isTyping;
+    //   let isPending = true;
+    //   clearTimeout(isTyping);
+    //   const nameInput = owner.querySelector('input');
+    //   nameInput.addEventListener('input', ({target}) => {
+    //     const matrix = 'John Doe';
+    //     target.value = target.value.replace(/[^a-z\s]/gim, '');
+    //     cardName.textContent = target.value;
+    //     if (target.value.length === 0) cardName.textContent = matrix;
+    //     isTyping = setTimeout(() => {
+    //       if (/\w\s{1}\w/i.test(target.value) &&
+    //       isPending) {
+    //         isPending = false;
+    //         clearTimeout(isTyping);
+    //         resolve();
+    //       }
+    //     }, 7000);
+    //   });
+    // });
+    // const isNum = new Promise(resolve => {
+    //   numberInput.addEventListener('input', ({target}) => {
+    //     new CreditCardInputMask({
+    //       element: target,
+    //       pattern: '{{9999}} {{9999}} {{9999}} {{9999}}',
+    //     });
+    //     target.value = target.value + matrix.slice(target.value.length);
+    //     cardNum.textContent = target.value + matrix.slice(target.value.length);
+    //     if (/(\d{4}\s{1}){3}(\d{4}){1}/gim.test(target.value)) resolve();
+    //   });
+    // });
+    // const isCvv = new Promise(resolve => {
+    //   cvvInput.addEventListener('input', ({target}) => {
+    //     target.value = target.value.replace(/\D/, '');
+    //     target.value = target.value.slice(0, 3);
+    //     if (/\d{3}/.test(target.value)) resolve();
+    //   });
+    // });
+    // Promise.all([isDate, isName, isNum, isCvv])
+    //   .then(() => {
+    //     btn.disabled = false;
+    //   });
+    formContainer.addEventListener('submit', (ev)=>{
+        ev.preventDefault();
+        console.log("\u0412\u044B \u043F\u044B\u0442\u0430\u0435\u0442\u0435\u0441\u044C \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0444\u043E\u0440\u043C\u0443, \u0443 \u0432\u0430\u0441 \u044D\u0442\u043E \u043D\u0435 \u0432\u044B\u0439\u0434\u0435\u0442!");
+    // console.log('123');
+    // const target = ev.target;
+    // const obj = new FormData(target);
+    // console.log(obj);
+    // validateCard(obj);
     });
-    const isCvv = new Promise((resolve)=>{
-        cvvInput.addEventListener("input", ({ target })=>{
-            target.value = target.value.replace(/\D/, "");
-            target.value = target.value.slice(0, 3);
-            if (/\d{3}/.test(target.value)) resolve();
+    numberInput.addEventListener('input', (ev)=>{
+        const target = ev.target;
+        new (0, _creditCardInputMaskDefault.default)({
+            element: target,
+            pattern: '{{9999}} {{9999}} {{9999}} {{9999}}'
         });
+        console.log('333', target.value + matrix.slice(target.value.length));
+        cardNum.textContent = target.value + matrix.slice(target.value.length);
     });
-    Promise.all([
-        isDate,
-        isName,
-        isNum,
-        isCvv
-    ]).then(()=>{
-        btn.disabled = false;
+    sendBtn.addEventListener('click', (ev)=>{
+        const target = ev.target;
+        // console.log(target);
+        (0, _validateCardDefault.default)(formContainer);
     });
     // ? вставка элементов
     (0, _redom.setChildren)(parent, p, card, formContainer);
@@ -681,415 +741,520 @@ const checkOutControl = (parent)=>{
 };
 exports.default = checkOutControl;
 
-},{"redom":"gT5MM","../create/createCreditCard":"2T35K","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","../create/createForm":"5fONl","../create/createCheckoutLabel":"a0uMR","credit-card-input-mask":"bO9Hm","air-datepicker":"grWkP"}],"gT5MM":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "el", ()=>(0, _htmlJs.el));
-parcelHelpers.export(exports, "h", ()=>(0, _htmlJs.h));
-parcelHelpers.export(exports, "html", ()=>(0, _htmlJs.html));
-parcelHelpers.export(exports, "list", ()=>(0, _listJs.list));
-parcelHelpers.export(exports, "List", ()=>(0, _listJs.List));
-parcelHelpers.export(exports, "listPool", ()=>(0, _listpoolJs.listPool));
-parcelHelpers.export(exports, "ListPool", ()=>(0, _listpoolJs.ListPool));
-parcelHelpers.export(exports, "mount", ()=>(0, _mountJs.mount));
-parcelHelpers.export(exports, "unmount", ()=>(0, _unmountJs.unmount));
-parcelHelpers.export(exports, "place", ()=>(0, _placeJs.place));
-parcelHelpers.export(exports, "Place", ()=>(0, _placeJs.Place));
-parcelHelpers.export(exports, "router", ()=>(0, _routerJs.router));
-parcelHelpers.export(exports, "Router", ()=>(0, _routerJs.Router));
-parcelHelpers.export(exports, "setAttr", ()=>(0, _setattrJs.setAttr));
-parcelHelpers.export(exports, "setXlink", ()=>(0, _setattrJs.setXlink));
-parcelHelpers.export(exports, "setData", ()=>(0, _setattrJs.setData));
-parcelHelpers.export(exports, "setStyle", ()=>(0, _setstyleJs.setStyle));
-parcelHelpers.export(exports, "setChildren", ()=>(0, _setchildrenJs.setChildren));
-parcelHelpers.export(exports, "s", ()=>(0, _svgJs.s));
-parcelHelpers.export(exports, "svg", ()=>(0, _svgJs.svg));
-parcelHelpers.export(exports, "text", ()=>(0, _textJs.text));
-parcelHelpers.export(exports, "viewFactory", ()=>(0, _viewFactoryJs.viewFactory));
-var _htmlJs = require("./html.js");
-var _listJs = require("./list.js");
-var _listpoolJs = require("./listpool.js");
-var _mountJs = require("./mount.js");
-var _unmountJs = require("./unmount.js");
-var _placeJs = require("./place.js");
-var _routerJs = require("./router.js");
-var _setattrJs = require("./setattr.js");
-var _setstyleJs = require("./setstyle.js");
-var _setchildrenJs = require("./setchildren.js");
-var _svgJs = require("./svg.js");
-var _textJs = require("./text.js");
-var _viewFactoryJs = require("./view-factory.js");
-
-},{"./html.js":"hjTCY","./list.js":false,"./listpool.js":false,"./mount.js":false,"./unmount.js":false,"./place.js":false,"./router.js":false,"./setattr.js":false,"./setstyle.js":false,"./setchildren.js":"hM3Vg","./svg.js":false,"./text.js":false,"./view-factory.js":false,"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hjTCY":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "html", ()=>html);
-parcelHelpers.export(exports, "el", ()=>el);
-parcelHelpers.export(exports, "h", ()=>h);
-var _createElementJs = require("./create-element.js");
-var _utilJs = require("./util.js");
-function html(query, ...args) {
-    let element;
-    const type = typeof query;
-    if (type === "string") element = (0, _createElementJs.createElement)(query);
-    else if (type === "function") {
-        const Query = query;
-        element = new Query(...args);
-    } else throw new Error("At least one argument required");
-    (0, _utilJs.parseArgumentsInternal)((0, _utilJs.getEl)(element), args, true);
-    return element;
-}
-const el = html;
-const h = html;
-html.extend = function extendHtml(...args) {
-    return html.bind(this, ...args);
-};
-
-},{"./create-element.js":"7ApSd","./util.js":"84GoL","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7ApSd":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "createElement", ()=>createElement);
-function createElement(query, ns) {
-    const { tag, id, className } = parse(query);
-    const element = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
-    if (id) element.id = id;
-    if (className) {
-        if (ns) element.setAttribute("class", className);
-        else element.className = className;
+},{"redom":"cWIuY","../create/createCreditCard":"2T35K","../create/createForm":"5fONl","../create/createCheckoutLabel":"a0uMR","credit-card-input-mask":"bO9Hm","air-datepicker":"grWkP","../utility/validateCard":"aSSob","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"cWIuY":[function(require,module,exports,__globalThis) {
+(function(global, factory) {
+    factory(exports);
+})(this, function(exports1) {
+    'use strict';
+    function createElement(query, ns) {
+        var ref = parse(query);
+        var tag = ref.tag;
+        var id = ref.id;
+        var className = ref.className;
+        var element = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
+        if (id) element.id = id;
+        if (className) {
+            if (ns) element.setAttribute("class", className);
+            else element.className = className;
+        }
+        return element;
     }
-    return element;
-}
-function parse(query) {
-    const chunks = query.split(/([.#])/);
-    let className = "";
-    let id = "";
-    for(let i = 1; i < chunks.length; i += 2)switch(chunks[i]){
-        case ".":
-            className += ` ${chunks[i + 1]}`;
-            break;
-        case "#":
-            id = chunks[i + 1];
+    function parse(query) {
+        var chunks = query.split(/([.#])/);
+        var className = "";
+        var id = "";
+        for(var i = 1; i < chunks.length; i += 2)switch(chunks[i]){
+            case ".":
+                className += " " + chunks[i + 1];
+                break;
+            case "#":
+                id = chunks[i + 1];
+        }
+        return {
+            className: className.trim(),
+            tag: chunks[0] || "div",
+            id: id
+        };
     }
-    return {
-        className: className.trim(),
-        tag: chunks[0] || "div",
-        id
+    function html(query) {
+        var args = [], len = arguments.length - 1;
+        while(len-- > 0)args[len] = arguments[len + 1];
+        var element;
+        var type = typeof query;
+        if (type === "string") element = createElement(query);
+        else if (type === "function") {
+            var Query = query;
+            element = new (Function.prototype.bind.apply(Query, [
+                null
+            ].concat(args)));
+        } else throw new Error("At least one argument required");
+        parseArgumentsInternal(getEl(element), args, true);
+        return element;
+    }
+    var el = html;
+    var h = html;
+    html.extend = function extendHtml() {
+        var args = [], len = arguments.length;
+        while(len--)args[len] = arguments[len];
+        return html.bind.apply(html, [
+            this
+        ].concat(args));
     };
-}
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
-exports.interopDefault = function(a) {
-    return a && a.__esModule ? a : {
-        default: a
-    };
-};
-exports.defineInteropFlag = function(a) {
-    Object.defineProperty(a, "__esModule", {
-        value: true
-    });
-};
-exports.exportAll = function(source, dest) {
-    Object.keys(source).forEach(function(key) {
-        if (key === "default" || key === "__esModule" || Object.prototype.hasOwnProperty.call(dest, key)) return;
-        Object.defineProperty(dest, key, {
-            enumerable: true,
-            get: function() {
-                return source[key];
-            }
-        });
-    });
-    return dest;
-};
-exports.export = function(dest, destName, get) {
-    Object.defineProperty(dest, destName, {
-        enumerable: true,
-        get: get
-    });
-};
-
-},{}],"84GoL":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "parseArguments", ()=>parseArguments);
-parcelHelpers.export(exports, "parseArgumentsInternal", ()=>parseArgumentsInternal);
-parcelHelpers.export(exports, "ensureEl", ()=>ensureEl);
-parcelHelpers.export(exports, "getEl", ()=>getEl);
-parcelHelpers.export(exports, "isNode", ()=>isNode);
-var _htmlJs = require("./html.js");
-var _mountJs = require("./mount.js");
-var _setattrJs = require("./setattr.js");
-var _textJs = require("./text.js");
-function parseArguments(element, args) {
-    parseArgumentsInternal(element, args);
-}
-function parseArgumentsInternal(element, args, initial) {
-    for (const arg of args){
-        if (arg !== 0 && !arg) continue;
-        const type = typeof arg;
-        if (type === "function") arg(element);
-        else if (type === "string" || type === "number") element.appendChild((0, _textJs.text)(arg));
-        else if (isNode(getEl(arg))) (0, _mountJs.mount)(element, arg);
-        else if (arg.length) parseArgumentsInternal(element, arg, initial);
-        else if (type === "object") (0, _setattrJs.setAttrInternal)(element, arg, null, initial);
+    function unmount(parent, child) {
+        var parentEl = getEl(parent);
+        var childEl = getEl(child);
+        if (child === childEl && childEl.__redom_view) // try to look up the view if not provided
+        child = childEl.__redom_view;
+        if (childEl.parentNode) {
+            doUnmount(child, childEl, parentEl);
+            parentEl.removeChild(childEl);
+        }
+        return child;
     }
-}
-function ensureEl(parent) {
-    return typeof parent === "string" ? (0, _htmlJs.html)(parent) : getEl(parent);
-}
-function getEl(parent) {
-    return parent.nodeType && parent || !parent.el && parent || getEl(parent.el);
-}
-function isNode(arg) {
-    return arg && arg.nodeType;
-}
-
-},{"./html.js":"hjTCY","./mount.js":"5qTJ0","./setattr.js":"ljeoO","./text.js":"9AiUK","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5qTJ0":[function(require,module,exports) {
-/* global Node, ShadowRoot */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "mount", ()=>mount);
-parcelHelpers.export(exports, "trigger", ()=>trigger);
-var _utilJs = require("./util.js");
-var _unmountJs = require("./unmount.js");
-const hookNames = [
-    "onmount",
-    "onremount",
-    "onunmount"
-];
-const shadowRootAvailable = typeof window !== "undefined" && "ShadowRoot" in window;
-function mount(parent, child, before, replace) {
-    const parentEl = (0, _utilJs.getEl)(parent);
-    const childEl = (0, _utilJs.getEl)(child);
-    if (child === childEl && childEl.__redom_view) // try to look up the view if not provided
-    child = childEl.__redom_view;
-    if (child !== childEl) childEl.__redom_view = child;
-    const wasMounted = childEl.__redom_mounted;
-    const oldParent = childEl.parentNode;
-    if (wasMounted && oldParent !== parentEl) (0, _unmountJs.doUnmount)(child, childEl, oldParent);
-    if (before != null) {
-        if (replace) {
-            const beforeEl = (0, _utilJs.getEl)(before);
-            if (beforeEl.__redom_mounted) trigger(beforeEl, "onunmount");
-            parentEl.replaceChild(childEl, beforeEl);
-        } else parentEl.insertBefore(childEl, (0, _utilJs.getEl)(before));
-    } else parentEl.appendChild(childEl);
-    doMount(child, childEl, parentEl, oldParent);
-    return child;
-}
-function trigger(el, eventName) {
-    if (eventName === "onmount" || eventName === "onremount") el.__redom_mounted = true;
-    else if (eventName === "onunmount") el.__redom_mounted = false;
-    const hooks = el.__redom_lifecycle;
-    if (!hooks) return;
-    const view = el.__redom_view;
-    let hookCount = 0;
-    view && view[eventName] && view[eventName]();
-    for(const hook in hooks)if (hook) hookCount++;
-    if (hookCount) {
-        let traverse = el.firstChild;
+    function doUnmount(child, childEl, parentEl) {
+        var hooks = childEl.__redom_lifecycle;
+        if (hooksAreEmpty(hooks)) {
+            childEl.__redom_lifecycle = {};
+            return;
+        }
+        var traverse = parentEl;
+        if (childEl.__redom_mounted) trigger(childEl, "onunmount");
         while(traverse){
-            const next = traverse.nextSibling;
-            trigger(traverse, eventName);
-            traverse = next;
+            var parentHooks = traverse.__redom_lifecycle || {};
+            for(var hook in hooks)if (parentHooks[hook]) parentHooks[hook] -= hooks[hook];
+            if (hooksAreEmpty(parentHooks)) traverse.__redom_lifecycle = null;
+            traverse = traverse.parentNode;
         }
     }
-}
-function doMount(child, childEl, parentEl, oldParent) {
-    const hooks = childEl.__redom_lifecycle || (childEl.__redom_lifecycle = {});
-    const remount = parentEl === oldParent;
-    let hooksFound = false;
-    for (const hookName of hookNames){
-        if (!remount) {
-            if (child !== childEl) {
-                if (hookName in child) hooks[hookName] = (hooks[hookName] || 0) + 1;
+    function hooksAreEmpty(hooks) {
+        if (hooks == null) return true;
+        for(var key in hooks){
+            if (hooks[key]) return false;
+        }
+        return true;
+    }
+    /* global Node, ShadowRoot */ var hookNames = [
+        "onmount",
+        "onremount",
+        "onunmount"
+    ];
+    var shadowRootAvailable = typeof window !== "undefined" && "ShadowRoot" in window;
+    function mount(parent, child, before, replace) {
+        var parentEl = getEl(parent);
+        var childEl = getEl(child);
+        if (child === childEl && childEl.__redom_view) // try to look up the view if not provided
+        child = childEl.__redom_view;
+        if (child !== childEl) childEl.__redom_view = child;
+        var wasMounted = childEl.__redom_mounted;
+        var oldParent = childEl.parentNode;
+        if (wasMounted && oldParent !== parentEl) doUnmount(child, childEl, oldParent);
+        if (before != null) {
+            if (replace) {
+                var beforeEl = getEl(before);
+                if (beforeEl.__redom_mounted) trigger(beforeEl, "onunmount");
+                parentEl.replaceChild(childEl, beforeEl);
+            } else parentEl.insertBefore(childEl, getEl(before));
+        } else parentEl.appendChild(childEl);
+        doMount(child, childEl, parentEl, oldParent);
+        return child;
+    }
+    function trigger(el, eventName) {
+        if (eventName === "onmount" || eventName === "onremount") el.__redom_mounted = true;
+        else if (eventName === "onunmount") el.__redom_mounted = false;
+        var hooks = el.__redom_lifecycle;
+        if (!hooks) return;
+        var view = el.__redom_view;
+        var hookCount = 0;
+        view && view[eventName] && view[eventName]();
+        for(var hook in hooks)if (hook) hookCount++;
+        if (hookCount) {
+            var traverse = el.firstChild;
+            while(traverse){
+                var next = traverse.nextSibling;
+                trigger(traverse, eventName);
+                traverse = next;
             }
         }
-        if (hooks[hookName]) hooksFound = true;
     }
-    if (!hooksFound) {
-        childEl.__redom_lifecycle = {};
-        return;
-    }
-    let traverse = parentEl;
-    let triggered = false;
-    if (remount || traverse && traverse.__redom_mounted) {
-        trigger(childEl, remount ? "onremount" : "onmount");
-        triggered = true;
-    }
-    while(traverse){
-        const parent = traverse.parentNode;
-        const parentHooks = traverse.__redom_lifecycle || (traverse.__redom_lifecycle = {});
-        for(const hook in hooks)parentHooks[hook] = (parentHooks[hook] || 0) + hooks[hook];
-        if (triggered) break;
-        else {
-            if (traverse.nodeType === Node.DOCUMENT_NODE || shadowRootAvailable && traverse instanceof ShadowRoot || parent && parent.__redom_mounted) {
-                trigger(traverse, remount ? "onremount" : "onmount");
-                triggered = true;
+    function doMount(child, childEl, parentEl, oldParent) {
+        var hooks = childEl.__redom_lifecycle || (childEl.__redom_lifecycle = {});
+        var remount = parentEl === oldParent;
+        var hooksFound = false;
+        for(var i = 0, list = hookNames; i < list.length; i += 1){
+            var hookName = list[i];
+            if (!remount) {
+                // if already mounted, skip this phase
+                if (child !== childEl) // only Views can have lifecycle events
+                {
+                    if (hookName in child) hooks[hookName] = (hooks[hookName] || 0) + 1;
+                }
             }
-            traverse = parent;
+            if (hooks[hookName]) hooksFound = true;
+        }
+        if (!hooksFound) {
+            childEl.__redom_lifecycle = {};
+            return;
+        }
+        var traverse = parentEl;
+        var triggered = false;
+        if (remount || traverse && traverse.__redom_mounted) {
+            trigger(childEl, remount ? "onremount" : "onmount");
+            triggered = true;
+        }
+        while(traverse){
+            var parent = traverse.parentNode;
+            var parentHooks = traverse.__redom_lifecycle || (traverse.__redom_lifecycle = {});
+            for(var hook in hooks)parentHooks[hook] = (parentHooks[hook] || 0) + hooks[hook];
+            if (triggered) break;
+            else {
+                if (traverse.nodeType === Node.DOCUMENT_NODE || shadowRootAvailable && traverse instanceof ShadowRoot || parent && parent.__redom_mounted) {
+                    trigger(traverse, remount ? "onremount" : "onmount");
+                    triggered = true;
+                }
+                traverse = parent;
+            }
         }
     }
-}
-
-},{"./util.js":"84GoL","./unmount.js":"irGDu","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"irGDu":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "unmount", ()=>unmount);
-parcelHelpers.export(exports, "doUnmount", ()=>doUnmount);
-var _utilJs = require("./util.js");
-var _mountJs = require("./mount.js");
-function unmount(parent, child) {
-    const parentEl = (0, _utilJs.getEl)(parent);
-    const childEl = (0, _utilJs.getEl)(child);
-    if (child === childEl && childEl.__redom_view) // try to look up the view if not provided
-    child = childEl.__redom_view;
-    if (childEl.parentNode) {
-        doUnmount(child, childEl, parentEl);
-        parentEl.removeChild(childEl);
+    function setStyle(view, arg1, arg2) {
+        var el = getEl(view);
+        if (typeof arg1 === "object") for(var key in arg1)setStyleValue(el, key, arg1[key]);
+        else setStyleValue(el, arg1, arg2);
     }
-    return child;
-}
-function doUnmount(child, childEl, parentEl) {
-    const hooks = childEl.__redom_lifecycle;
-    if (hooksAreEmpty(hooks)) {
-        childEl.__redom_lifecycle = {};
-        return;
+    function setStyleValue(el, key, value) {
+        el.style[key] = value == null ? "" : value;
     }
-    let traverse = parentEl;
-    if (childEl.__redom_mounted) (0, _mountJs.trigger)(childEl, "onunmount");
-    while(traverse){
-        const parentHooks = traverse.__redom_lifecycle || {};
-        for(const hook in hooks)if (parentHooks[hook]) parentHooks[hook] -= hooks[hook];
-        if (hooksAreEmpty(parentHooks)) traverse.__redom_lifecycle = null;
-        traverse = traverse.parentNode;
+    /* global SVGElement */ var xlinkns = "http://www.w3.org/1999/xlink";
+    function setAttr(view, arg1, arg2) {
+        setAttrInternal(view, arg1, arg2);
     }
-}
-function hooksAreEmpty(hooks) {
-    if (hooks == null) return true;
-    for(const key in hooks){
-        if (hooks[key]) return false;
-    }
-    return true;
-}
-
-},{"./util.js":"84GoL","./mount.js":"5qTJ0","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"ljeoO":[function(require,module,exports) {
-/* global SVGElement */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "setAttr", ()=>setAttr);
-parcelHelpers.export(exports, "setAttrInternal", ()=>setAttrInternal);
-parcelHelpers.export(exports, "setXlink", ()=>setXlink);
-parcelHelpers.export(exports, "setData", ()=>setData);
-var _setstyleJs = require("./setstyle.js");
-var _utilJs = require("./util.js");
-const xlinkns = "http://www.w3.org/1999/xlink";
-function setAttr(view, arg1, arg2) {
-    setAttrInternal(view, arg1, arg2);
-}
-function setAttrInternal(view, arg1, arg2, initial) {
-    const el = (0, _utilJs.getEl)(view);
-    const isObj = typeof arg1 === "object";
-    if (isObj) for(const key in arg1)setAttrInternal(el, key, arg1[key], initial);
-    else {
-        const isSVG = el instanceof SVGElement;
-        const isFunc = typeof arg2 === "function";
-        if (arg1 === "style" && typeof arg2 === "object") (0, _setstyleJs.setStyle)(el, arg2);
-        else if (isSVG && isFunc) el[arg1] = arg2;
-        else if (arg1 === "dataset") setData(el, arg2);
-        else if (!isSVG && (arg1 in el || isFunc) && arg1 !== "list") el[arg1] = arg2;
+    function setAttrInternal(view, arg1, arg2, initial) {
+        var el = getEl(view);
+        var isObj = typeof arg1 === "object";
+        if (isObj) for(var key in arg1)setAttrInternal(el, key, arg1[key], initial);
         else {
-            if (isSVG && arg1 === "xlink") {
-                setXlink(el, arg2);
+            var isSVG = el instanceof SVGElement;
+            var isFunc = typeof arg2 === "function";
+            if (arg1 === "style" && typeof arg2 === "object") setStyle(el, arg2);
+            else if (isSVG && isFunc) el[arg1] = arg2;
+            else if (arg1 === "dataset") setData(el, arg2);
+            else if (!isSVG && (arg1 in el || isFunc) && arg1 !== "list") el[arg1] = arg2;
+            else {
+                if (isSVG && arg1 === "xlink") {
+                    setXlink(el, arg2);
+                    return;
+                }
+                if (initial && arg1 === "class") arg2 = el.className + " " + arg2;
+                if (arg2 == null) el.removeAttribute(arg1);
+                else el.setAttribute(arg1, arg2);
+            }
+        }
+    }
+    function setXlink(el, arg1, arg2) {
+        if (typeof arg1 === "object") for(var key in arg1)setXlink(el, key, arg1[key]);
+        else if (arg2 != null) el.setAttributeNS(xlinkns, arg1, arg2);
+        else el.removeAttributeNS(xlinkns, arg1, arg2);
+    }
+    function setData(el, arg1, arg2) {
+        if (typeof arg1 === "object") for(var key in arg1)setData(el, key, arg1[key]);
+        else if (arg2 != null) el.dataset[arg1] = arg2;
+        else delete el.dataset[arg1];
+    }
+    function text(str) {
+        return document.createTextNode(str != null ? str : "");
+    }
+    function parseArgumentsInternal(element, args, initial) {
+        for(var i = 0, list = args; i < list.length; i += 1){
+            var arg = list[i];
+            if (arg !== 0 && !arg) continue;
+            var type = typeof arg;
+            if (type === "function") arg(element);
+            else if (type === "string" || type === "number") element.appendChild(text(arg));
+            else if (isNode(getEl(arg))) mount(element, arg);
+            else if (arg.length) parseArgumentsInternal(element, arg, initial);
+            else if (type === "object") setAttrInternal(element, arg, null, initial);
+        }
+    }
+    function ensureEl(parent) {
+        return typeof parent === "string" ? html(parent) : getEl(parent);
+    }
+    function getEl(parent) {
+        return parent.nodeType && parent || !parent.el && parent || getEl(parent.el);
+    }
+    function isNode(arg) {
+        return arg && arg.nodeType;
+    }
+    function dispatch(child, data, eventName) {
+        if (eventName === void 0) eventName = "redom";
+        var childEl = getEl(child);
+        var event = new CustomEvent(eventName, {
+            bubbles: true,
+            detail: data
+        });
+        childEl.dispatchEvent(event);
+    }
+    function setChildren(parent) {
+        var children = [], len = arguments.length - 1;
+        while(len-- > 0)children[len] = arguments[len + 1];
+        var parentEl = getEl(parent);
+        var current = traverse(parent, children, parentEl.firstChild);
+        while(current){
+            var next = current.nextSibling;
+            unmount(parent, current);
+            current = next;
+        }
+    }
+    function traverse(parent, children, _current) {
+        var current = _current;
+        var childEls = Array(children.length);
+        for(var i = 0; i < children.length; i++)childEls[i] = children[i] && getEl(children[i]);
+        for(var i$1 = 0; i$1 < children.length; i$1++){
+            var child = children[i$1];
+            if (!child) continue;
+            var childEl = childEls[i$1];
+            if (childEl === current) {
+                current = current.nextSibling;
+                continue;
+            }
+            if (isNode(childEl)) {
+                var next = current && current.nextSibling;
+                var exists = child.__redom_index != null;
+                var replace = exists && next === childEls[i$1 + 1];
+                mount(parent, child, current, replace);
+                if (replace) current = next;
+                continue;
+            }
+            if (child.length != null) current = traverse(parent, child, current);
+        }
+        return current;
+    }
+    function listPool(View, key, initData) {
+        return new ListPool(View, key, initData);
+    }
+    var ListPool = function ListPool(View, key, initData) {
+        this.View = View;
+        this.initData = initData;
+        this.oldLookup = {};
+        this.lookup = {};
+        this.oldViews = [];
+        this.views = [];
+        if (key != null) this.key = typeof key === "function" ? key : propKey(key);
+    };
+    ListPool.prototype.update = function update(data, context) {
+        var ref = this;
+        var View = ref.View;
+        var key = ref.key;
+        var initData = ref.initData;
+        var keySet = key != null;
+        var oldLookup = this.lookup;
+        var newLookup = {};
+        var newViews = Array(data.length);
+        var oldViews = this.views;
+        for(var i = 0; i < data.length; i++){
+            var item = data[i];
+            var view = void 0;
+            if (keySet) {
+                var id = key(item);
+                view = oldLookup[id] || new View(initData, item, i, data);
+                newLookup[id] = view;
+                view.__redom_id = id;
+            } else view = oldViews[i] || new View(initData, item, i, data);
+            view.update && view.update(item, i, data, context);
+            var el = getEl(view.el);
+            el.__redom_view = view;
+            newViews[i] = view;
+        }
+        this.oldViews = oldViews;
+        this.views = newViews;
+        this.oldLookup = oldLookup;
+        this.lookup = newLookup;
+    };
+    function propKey(key) {
+        return function(item) {
+            return item[key];
+        };
+    }
+    function list(parent, View, key, initData) {
+        return new List(parent, View, key, initData);
+    }
+    var List = function List(parent, View, key, initData) {
+        this.View = View;
+        this.initData = initData;
+        this.views = [];
+        this.pool = new ListPool(View, key, initData);
+        this.el = ensureEl(parent);
+        this.keySet = key != null;
+    };
+    List.prototype.update = function update(data, context) {
+        if (data === void 0) data = [];
+        var ref = this;
+        var keySet = ref.keySet;
+        var oldViews = this.views;
+        this.pool.update(data, context);
+        var ref$1 = this.pool;
+        var views = ref$1.views;
+        var lookup = ref$1.lookup;
+        if (keySet) for(var i = 0; i < oldViews.length; i++){
+            var oldView = oldViews[i];
+            var id = oldView.__redom_id;
+            if (lookup[id] == null) {
+                oldView.__redom_index = null;
+                unmount(this, oldView);
+            }
+        }
+        for(var i$1 = 0; i$1 < views.length; i$1++){
+            var view = views[i$1];
+            view.__redom_index = i$1;
+        }
+        setChildren(this, views);
+        if (keySet) this.lookup = lookup;
+        this.views = views;
+    };
+    List.extend = function extendList(parent, View, key, initData) {
+        return List.bind(List, parent, View, key, initData);
+    };
+    list.extend = List.extend;
+    /* global Node */ function place(View, initData) {
+        return new Place(View, initData);
+    }
+    var Place = function Place(View, initData) {
+        this.el = text("");
+        this.visible = false;
+        this.view = null;
+        this._placeholder = this.el;
+        if (View instanceof Node) this._el = View;
+        else if (View.el instanceof Node) {
+            this._el = View;
+            this.view = View;
+        } else this._View = View;
+        this._initData = initData;
+    };
+    Place.prototype.update = function update(visible, data) {
+        var placeholder = this._placeholder;
+        var parentNode = this.el.parentNode;
+        if (visible) {
+            if (!this.visible) {
+                if (this._el) {
+                    mount(parentNode, this._el, placeholder);
+                    unmount(parentNode, placeholder);
+                    this.el = getEl(this._el);
+                    this.visible = visible;
+                } else {
+                    var View = this._View;
+                    var view = new View(this._initData);
+                    this.el = getEl(view);
+                    this.view = view;
+                    mount(parentNode, view, placeholder);
+                    unmount(parentNode, placeholder);
+                }
+            }
+            this.view && this.view.update && this.view.update(data);
+        } else if (this.visible) {
+            if (this._el) {
+                mount(parentNode, placeholder, this._el);
+                unmount(parentNode, this._el);
+                this.el = placeholder;
+                this.visible = visible;
                 return;
             }
-            if (initial && arg1 === "class") arg2 = el.className + " " + arg2;
-            if (arg2 == null) el.removeAttribute(arg1);
-            else el.setAttribute(arg1, arg2);
+            mount(parentNode, placeholder, this.view);
+            unmount(parentNode, this.view);
+            this.el = placeholder;
+            this.view = null;
         }
+        this.visible = visible;
+    };
+    /* global Node */ function router(parent, views, initData) {
+        return new Router(parent, views, initData);
     }
-}
-function setXlink(el, arg1, arg2) {
-    if (typeof arg1 === "object") for(const key in arg1)setXlink(el, key, arg1[key]);
-    else if (arg2 != null) el.setAttributeNS(xlinkns, arg1, arg2);
-    else el.removeAttributeNS(xlinkns, arg1, arg2);
-}
-function setData(el, arg1, arg2) {
-    if (typeof arg1 === "object") for(const key in arg1)setData(el, key, arg1[key]);
-    else if (arg2 != null) el.dataset[arg1] = arg2;
-    else delete el.dataset[arg1];
-}
-
-},{"./setstyle.js":"5PSeC","./util.js":"84GoL","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5PSeC":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "setStyle", ()=>setStyle);
-var _utilJs = require("./util.js");
-function setStyle(view, arg1, arg2) {
-    const el = (0, _utilJs.getEl)(view);
-    if (typeof arg1 === "object") for(const key in arg1)setStyleValue(el, key, arg1[key]);
-    else setStyleValue(el, arg1, arg2);
-}
-function setStyleValue(el, key, value) {
-    el.style[key] = value == null ? "" : value;
-}
-
-},{"./util.js":"84GoL","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9AiUK":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "text", ()=>text);
-function text(str) {
-    return document.createTextNode(str != null ? str : "");
-}
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hM3Vg":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "setChildren", ()=>setChildren);
-var _mountJs = require("./mount.js");
-var _unmountJs = require("./unmount.js");
-var _utilJs = require("./util.js");
-function setChildren(parent, ...children) {
-    const parentEl = (0, _utilJs.getEl)(parent);
-    let current = traverse(parent, children, parentEl.firstChild);
-    while(current){
-        const next = current.nextSibling;
-        (0, _unmountJs.unmount)(parent, current);
-        current = next;
-    }
-}
-function traverse(parent, children, _current) {
-    let current = _current;
-    const childEls = Array(children.length);
-    for(let i = 0; i < children.length; i++)childEls[i] = children[i] && (0, _utilJs.getEl)(children[i]);
-    for(let i = 0; i < children.length; i++){
-        const child = children[i];
-        if (!child) continue;
-        const childEl = childEls[i];
-        if (childEl === current) {
-            current = current.nextSibling;
-            continue;
+    var Router = function Router(parent, views, initData) {
+        this.el = ensureEl(parent);
+        this.views = views;
+        this.Views = views; // backwards compatibility
+        this.initData = initData;
+    };
+    Router.prototype.update = function update(route, data) {
+        if (route !== this.route) {
+            var views = this.views;
+            var View = views[route];
+            this.route = route;
+            if (View && (View instanceof Node || View.el instanceof Node)) this.view = View;
+            else this.view = View && new View(this.initData, data);
+            setChildren(this.el, [
+                this.view
+            ]);
         }
-        if ((0, _utilJs.isNode)(childEl)) {
-            const next = current && current.nextSibling;
-            const exists = child.__redom_index != null;
-            const replace = exists && next === childEls[i + 1];
-            (0, _mountJs.mount)(parent, child, current, replace);
-            if (replace) current = next;
-            continue;
-        }
-        if (child.length != null) current = traverse(parent, child, current);
+        this.view && this.view.update && this.view.update(data, route);
+    };
+    var ns = "http://www.w3.org/2000/svg";
+    function svg(query) {
+        var args = [], len = arguments.length - 1;
+        while(len-- > 0)args[len] = arguments[len + 1];
+        var element;
+        var type = typeof query;
+        if (type === "string") element = createElement(query, ns);
+        else if (type === "function") {
+            var Query = query;
+            element = new (Function.prototype.bind.apply(Query, [
+                null
+            ].concat(args)));
+        } else throw new Error("At least one argument required");
+        parseArgumentsInternal(getEl(element), args, true);
+        return element;
     }
-    return current;
-}
+    var s = svg;
+    svg.extend = function extendSvg() {
+        var args = [], len = arguments.length;
+        while(len--)args[len] = arguments[len];
+        return svg.bind.apply(svg, [
+            this
+        ].concat(args));
+    };
+    svg.ns = ns;
+    function viewFactory(views, key) {
+        if (!views || typeof views !== "object") throw new Error("views must be an object");
+        if (!key || typeof key !== "string") throw new Error("key must be a string");
+        return function(initData, item, i, data) {
+            var viewKey = item[key];
+            var View = views[viewKey];
+            if (View) return new View(initData, item, i, data);
+            else throw new Error("view " + viewKey + " not found");
+        };
+    }
+    exports1.List = List;
+    exports1.ListPool = ListPool;
+    exports1.Place = Place;
+    exports1.Router = Router;
+    exports1.dispatch = dispatch;
+    exports1.el = el;
+    exports1.h = h;
+    exports1.html = html;
+    exports1.list = list;
+    exports1.listPool = listPool;
+    exports1.mount = mount;
+    exports1.place = place;
+    exports1.router = router;
+    exports1.s = s;
+    exports1.setAttr = setAttr;
+    exports1.setChildren = setChildren;
+    exports1.setData = setData;
+    exports1.setStyle = setStyle;
+    exports1.setXlink = setXlink;
+    exports1.svg = svg;
+    exports1.text = text;
+    exports1.unmount = unmount;
+    exports1.viewFactory = viewFactory;
+});
 
-},{"./mount.js":"5qTJ0","./unmount.js":"irGDu","./util.js":"84GoL","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2T35K":[function(require,module,exports) {
+},{}],"2T35K":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _redom = require("redom");
 const creditCard = ()=>{
-    const card = (0, _redom.el)(".credit-card", "lorem");
-    const number = (0, _redom.el)("span.card__number", "xxxx xxxx xxxx xxxx");
-    const cardElemsWrap = (0, _redom.el)(".card__personal");
-    const cardName = (0, _redom.el)("span.card__name", "John Doe");
-    const cardDate = (0, _redom.el)("span.card__date", "04/24");
+    const card = (0, _redom.el)('.credit-card', 'lorem');
+    const number = (0, _redom.el)('span.card__number', 'xxxx xxxx xxxx xxxx');
+    const cardElemsWrap = (0, _redom.el)('.card__personal');
+    const cardName = (0, _redom.el)('span.card__name', 'John Doe');
+    const cardDate = (0, _redom.el)('span.card__date', '04/24');
     (0, _redom.setChildren)(cardElemsWrap, [
         cardName,
         cardDate
@@ -1107,21 +1272,51 @@ const creditCard = ()=>{
 };
 exports.default = creditCard;
 
-},{"redom":"gT5MM","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5fONl":[function(require,module,exports) {
+},{"redom":"cWIuY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports,__globalThis) {
+exports.interopDefault = function(a) {
+    return a && a.__esModule ? a : {
+        default: a
+    };
+};
+exports.defineInteropFlag = function(a) {
+    Object.defineProperty(a, '__esModule', {
+        value: true
+    });
+};
+exports.exportAll = function(source, dest) {
+    Object.keys(source).forEach(function(key) {
+        if (key === 'default' || key === '__esModule' || Object.prototype.hasOwnProperty.call(dest, key)) return;
+        Object.defineProperty(dest, key, {
+            enumerable: true,
+            get: function() {
+                return source[key];
+            }
+        });
+    });
+    return dest;
+};
+exports.export = function(dest, destName, get) {
+    Object.defineProperty(dest, destName, {
+        enumerable: true,
+        get: get
+    });
+};
+
+},{}],"5fONl":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _redom = require("redom");
 const createInputGroup = (wrapClass, name, text)=>{
-    const wrap = (0, _redom.el)("div", {
+    const wrap = (0, _redom.el)('div', {
         className: `form__input-wrap form__input-wrap_${wrapClass}`
     });
-    const label = (0, _redom.el)("label", {
+    const label = (0, _redom.el)('label', {
         className: `form__label form__${name}-label`,
         for: `${name}`,
         textContent: `${text}`
     });
-    const input = (0, _redom.el)("input", {
-        type: "text",
+    const input = (0, _redom.el)('input', {
+        type: 'text',
         className: `input input__${name}`,
         name: `${name}`
     });
@@ -1129,51 +1324,57 @@ const createInputGroup = (wrapClass, name, text)=>{
     return wrap;
 };
 const createBtn = (text)=>{
-    const btn = (0, _redom.el)("button.form__button", `${text}`, {
-        type: "submit",
-        disabled: true
+    const btn = (0, _redom.el)('button.form__button', `${text}`, {
+        disabled: true,
+        type: 'submit'
     });
     return btn;
 };
 const createForm = ()=>{
-    const formContainer = (0, _redom.el)("form", {
-        action: "#",
-        className: "form",
-        id: "form"
+    const formContainer = (0, _redom.el)('form', {
+        action: '#',
+        className: 'form',
+        id: 'form'
     });
-    const owner = createInputGroup("holder", "owner", "Card Holder");
-    const number = createInputGroup("number", "number", "Card Number");
-    const date = createInputGroup("date", "date", "Card Expiry");
-    const cvv = createInputGroup("cvv", "cvv", "CVV");
-    const btn = createBtn("CHECK OUT");
-    (0, _redom.setChildren)(formContainer, owner, number, date, cvv, btn);
+    const owner = createInputGroup('holder', 'owner', 'Card Holder');
+    const number = createInputGroup('number', 'number', 'Card Number');
+    const date = createInputGroup('date', 'date', 'Card Expiry');
+    const cvv = createInputGroup('cvv', 'cvv', 'CVV');
+    const sendBtn = (0, _redom.el)('button', {
+        type: 'button',
+        className: 'form__button form__sendBtn',
+        textContent: "\u041E\u0422\u041F\u0420\u0410\u0412\u0418\u0422\u042C"
+    });
+    const btn = createBtn('CHECK OUT');
+    (0, _redom.setChildren)(formContainer, owner, number, date, cvv, sendBtn, btn);
     return {
         formContainer,
         owner,
         number,
         date,
         cvv,
+        sendBtn,
         btn
     };
 };
 exports.default = createForm;
 
-},{"redom":"gT5MM","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"a0uMR":[function(require,module,exports) {
+},{"redom":"cWIuY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"a0uMR":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _redom = require("redom");
 const createCheckoutLabel = ()=>{
-    const p = (0, _redom.el)("p.secure", "Secure Checkout");
+    const p = (0, _redom.el)('p.secure', 'Secure Checkout');
     return p;
 };
 exports.default = createCheckoutLabel;
 
-},{"redom":"gT5MM","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bO9Hm":[function(require,module,exports) {
+},{"redom":"cWIuY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bO9Hm":[function(require,module,exports,__globalThis) {
 "use strict";
 var RestrictedInput = require("5b7da5c00506f039");
 module.exports = RestrictedInput;
 
-},{"5b7da5c00506f039":"fPKQq"}],"fPKQq":[function(require,module,exports) {
+},{"5b7da5c00506f039":"fPKQq"}],"fPKQq":[function(require,module,exports,__globalThis) {
 "use strict";
 var device_1 = require("ffc328f4f2080bb3");
 var supportsInputFormatting = require("57c19f0c2e4fde16");
@@ -1218,7 +1419,7 @@ var noop_1 = require("15cb6ec3b5a63019");
 }();
 module.exports = RestrictedInput;
 
-},{"ffc328f4f2080bb3":"coyu0","57c19f0c2e4fde16":"jxX5h","2c35002368c1422":"5VqXj","e7198257350d64ab":"6xmWb","3178dbaa331da4ad":"5JFC5","4dcbc98b13b654d3":"1MWrj","e35b87cbed1c327d":"dR402","15cb6ec3b5a63019":"fl4aQ"}],"coyu0":[function(require,module,exports) {
+},{"ffc328f4f2080bb3":"coyu0","57c19f0c2e4fde16":"jxX5h","2c35002368c1422":"5VqXj","e7198257350d64ab":"6xmWb","3178dbaa331da4ad":"5JFC5","4dcbc98b13b654d3":"1MWrj","e35b87cbed1c327d":"dR402","15cb6ec3b5a63019":"fl4aQ"}],"coyu0":[function(require,module,exports,__globalThis) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1261,30 +1462,30 @@ function isSamsungBrowser(ua) {
 }
 exports.isSamsungBrowser = isSamsungBrowser;
 
-},{"e02c2f1bd07d6618":"jtldm","46919a64a6a31c37":"in5Dg","56aec31e93edfc62":"40nLK","f04395b81e0b8098":"kAfY0","4298bcecdfbe7e62":"7rUWx"}],"jtldm":[function(require,module,exports) {
+},{"e02c2f1bd07d6618":"jtldm","46919a64a6a31c37":"in5Dg","56aec31e93edfc62":"40nLK","f04395b81e0b8098":"kAfY0","4298bcecdfbe7e62":"7rUWx"}],"jtldm":[function(require,module,exports,__globalThis) {
 module.exports = require("683e2b9152cf1377");
 
-},{"683e2b9152cf1377":"94VUa"}],"94VUa":[function(require,module,exports) {
+},{"683e2b9152cf1377":"94VUa"}],"94VUa":[function(require,module,exports,__globalThis) {
 "use strict";
 module.exports = function isAndroid(ua) {
     ua = ua || window.navigator.userAgent;
     return /Android/i.test(ua);
 };
 
-},{}],"in5Dg":[function(require,module,exports) {
+},{}],"in5Dg":[function(require,module,exports,__globalThis) {
 module.exports = require("56b6d3afe756b85e");
 
-},{"56b6d3afe756b85e":"hO6nk"}],"hO6nk":[function(require,module,exports) {
+},{"56b6d3afe756b85e":"hO6nk"}],"hO6nk":[function(require,module,exports,__globalThis) {
 "use strict";
 module.exports = function isChromeOS(ua) {
     ua = ua || window.navigator.userAgent;
     return /CrOS/i.test(ua);
 };
 
-},{}],"40nLK":[function(require,module,exports) {
+},{}],"40nLK":[function(require,module,exports,__globalThis) {
 module.exports = require("2e77d2cdaecfb681");
 
-},{"2e77d2cdaecfb681":"8wlUP"}],"8wlUP":[function(require,module,exports) {
+},{"2e77d2cdaecfb681":"8wlUP"}],"8wlUP":[function(require,module,exports,__globalThis) {
 "use strict";
 var isEdge = require("cc4a08083f1942d3");
 var isSamsung = require("7f9d542d87ce715e");
@@ -1296,45 +1497,45 @@ module.exports = function isChrome(ua) {
     return (ua.indexOf("Chrome") !== -1 || ua.indexOf("CriOS") !== -1) && !isEdge(ua) && !isSamsung(ua) && !isDuckDuckGo(ua) && !isOpera(ua) && !isSilk(ua);
 };
 
-},{"cc4a08083f1942d3":"eanR9","7f9d542d87ce715e":"3YCCg","8e897396debb4355":"3J4Uq","58808e221cf98a7":"5k0Nr","26c55d85b11fa25e":"8i4Xu"}],"eanR9":[function(require,module,exports) {
+},{"cc4a08083f1942d3":"eanR9","7f9d542d87ce715e":"3YCCg","8e897396debb4355":"3J4Uq","58808e221cf98a7":"5k0Nr","26c55d85b11fa25e":"8i4Xu"}],"eanR9":[function(require,module,exports,__globalThis) {
 "use strict";
 module.exports = function isEdge(ua) {
     ua = ua || window.navigator.userAgent;
     return ua.indexOf("Edge/") !== -1 || ua.indexOf("Edg/") !== -1;
 };
 
-},{}],"3YCCg":[function(require,module,exports) {
+},{}],"3YCCg":[function(require,module,exports,__globalThis) {
 "use strict";
 module.exports = function isSamsungBrowser(ua) {
     ua = ua || window.navigator.userAgent;
     return /SamsungBrowser/i.test(ua);
 };
 
-},{}],"3J4Uq":[function(require,module,exports) {
+},{}],"3J4Uq":[function(require,module,exports,__globalThis) {
 "use strict";
 module.exports = function isDuckDuckGo(ua) {
     ua = ua || window.navigator.userAgent;
     return ua.indexOf("DuckDuckGo/") !== -1;
 };
 
-},{}],"5k0Nr":[function(require,module,exports) {
+},{}],"5k0Nr":[function(require,module,exports,__globalThis) {
 "use strict";
 module.exports = function isOpera(ua) {
     ua = ua || window.navigator.userAgent;
     return ua.indexOf("OPR/") !== -1 || ua.indexOf("Opera/") !== -1 || ua.indexOf("OPT/") !== -1;
 };
 
-},{}],"8i4Xu":[function(require,module,exports) {
+},{}],"8i4Xu":[function(require,module,exports,__globalThis) {
 "use strict";
 module.exports = function isSilk(ua) {
     ua = ua || window.navigator.userAgent;
     return ua.indexOf("Silk/") !== -1;
 };
 
-},{}],"kAfY0":[function(require,module,exports) {
+},{}],"kAfY0":[function(require,module,exports,__globalThis) {
 module.exports = require("7d556d0501305975");
 
-},{"7d556d0501305975":"7ULxF"}],"7ULxF":[function(require,module,exports) {
+},{"7d556d0501305975":"7ULxF"}],"7ULxF":[function(require,module,exports,__globalThis) {
 "use strict";
 var isIpadOS = require("e1ff5afcccf3a7d");
 module.exports = function isIos(ua, checkIpadOS, document) {
@@ -1344,7 +1545,7 @@ module.exports = function isIos(ua, checkIpadOS, document) {
     return checkIpadOS ? iOsTest || isIpadOS(ua, document) : iOsTest;
 };
 
-},{"e1ff5afcccf3a7d":"1weq9"}],"1weq9":[function(require,module,exports) {
+},{"e1ff5afcccf3a7d":"1weq9"}],"1weq9":[function(require,module,exports,__globalThis) {
 "use strict";
 module.exports = function isIpadOS(ua, document) {
     ua = ua || window.navigator.userAgent;
@@ -1354,17 +1555,17 @@ module.exports = function isIpadOS(ua, document) {
     return /Mac|iPad/i.test(ua) && "ontouchend" in document;
 };
 
-},{}],"7rUWx":[function(require,module,exports) {
+},{}],"7rUWx":[function(require,module,exports,__globalThis) {
 module.exports = require("67ef016e043b3ea6");
 
-},{"67ef016e043b3ea6":"9wFUI"}],"9wFUI":[function(require,module,exports) {
+},{"67ef016e043b3ea6":"9wFUI"}],"9wFUI":[function(require,module,exports,__globalThis) {
 "use strict";
 module.exports = function isIe9(ua) {
     ua = ua || window.navigator.userAgent;
     return ua.indexOf("MSIE 9") !== -1;
 };
 
-},{}],"jxX5h":[function(require,module,exports) {
+},{}],"jxX5h":[function(require,module,exports,__globalThis) {
 "use strict";
 var device_1 = require("7cba154c0b381aa1");
 module.exports = function supportsInputFormatting() {
@@ -1372,7 +1573,7 @@ module.exports = function supportsInputFormatting() {
     return !device_1.isSamsungBrowser();
 };
 
-},{"7cba154c0b381aa1":"coyu0"}],"5VqXj":[function(require,module,exports) {
+},{"7cba154c0b381aa1":"coyu0"}],"5VqXj":[function(require,module,exports,__globalThis) {
 "use strict";
 var __extends = this && this.__extends || function() {
     var extendStatics = function(d, b) {
@@ -1463,7 +1664,7 @@ var IosStrategy = /** @class */ function(_super) {
 }(base_1.BaseStrategy);
 exports.IosStrategy = IosStrategy;
 
-},{"c887f11c64defc69":"dR402","c198b58f639cf342":"cbCy3","538d5236c2d02d7":"2gSp4"}],"dR402":[function(require,module,exports) {
+},{"c887f11c64defc69":"dR402","c198b58f639cf342":"cbCy3","538d5236c2d02d7":"2gSp4"}],"dR402":[function(require,module,exports,__globalThis) {
 "use strict";
 var __extends = this && this.__extends || function() {
     var extendStatics = function(d, b) {
@@ -1643,7 +1844,7 @@ var BaseStrategy = /** @class */ function(_super) {
 }(strategy_interface_1.StrategyInterface);
 exports.BaseStrategy = BaseStrategy;
 
-},{"ba1a91befbe43d7b":"eR489","65a7206985773303":"cbCy3","7a945b24f191b921":"2gSp4","80922d69e4261553":"bCGFT","baccb21aaedf6528":"aA9DZ","b744c2bea1938f97":"6kXTK"}],"eR489":[function(require,module,exports) {
+},{"ba1a91befbe43d7b":"eR489","65a7206985773303":"cbCy3","7a945b24f191b921":"2gSp4","80922d69e4261553":"bCGFT","baccb21aaedf6528":"aA9DZ","b744c2bea1938f97":"6kXTK"}],"eR489":[function(require,module,exports,__globalThis) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1658,7 +1859,7 @@ var StrategyInterface = /** @class */ function() {
 }();
 exports.StrategyInterface = StrategyInterface;
 
-},{}],"cbCy3":[function(require,module,exports) {
+},{}],"cbCy3":[function(require,module,exports,__globalThis) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1713,7 +1914,7 @@ function keyCannotMutateValue(event) {
 }
 exports.keyCannotMutateValue = keyCannotMutateValue;
 
-},{"7ee021c6c8ee0976":"2gSp4"}],"2gSp4":[function(require,module,exports) {
+},{"7ee021c6c8ee0976":"2gSp4"}],"2gSp4":[function(require,module,exports,__globalThis) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1736,7 +1937,7 @@ function set(element, start, end) {
 }
 exports.set = set;
 
-},{}],"bCGFT":[function(require,module,exports) {
+},{}],"bCGFT":[function(require,module,exports,__globalThis) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1747,7 +1948,7 @@ function isBackspace(event) {
 }
 exports.isBackspace = isBackspace;
 
-},{}],"aA9DZ":[function(require,module,exports) {
+},{}],"aA9DZ":[function(require,module,exports,__globalThis) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1759,7 +1960,7 @@ function isDelete(event) {
 }
 exports.isDelete = isDelete;
 
-},{}],"6kXTK":[function(require,module,exports) {
+},{}],"6kXTK":[function(require,module,exports,__globalThis) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1867,7 +2068,7 @@ var PatternFormatter = /** @class */ function() {
 }();
 exports.PatternFormatter = PatternFormatter;
 
-},{"1f5ff224a61c7998":"jx52n","ef05ada64cf78374":"bCGFT"}],"jx52n":[function(require,module,exports) {
+},{"1f5ff224a61c7998":"jx52n","ef05ada64cf78374":"bCGFT"}],"jx52n":[function(require,module,exports,__globalThis) {
 "use strict";
 Object.defineProperty(exports, "__esModule", {
     value: true
@@ -1926,7 +2127,7 @@ function parsePattern(patternString) {
 }
 exports.parsePattern = parsePattern;
 
-},{}],"6xmWb":[function(require,module,exports) {
+},{}],"6xmWb":[function(require,module,exports,__globalThis) {
 "use strict";
 var __extends = this && this.__extends || function() {
     var extendStatics = function(d, b) {
@@ -2020,7 +2221,7 @@ var AndroidChromeStrategy = /** @class */ function(_super) {
 }(base_1.BaseStrategy);
 exports.AndroidChromeStrategy = AndroidChromeStrategy;
 
-},{"f4a72b21e56161a8":"cbCy3","a7048c4be722dc46":"dR402","570b54ead3349ba8":"2gSp4"}],"5JFC5":[function(require,module,exports) {
+},{"f4a72b21e56161a8":"cbCy3","a7048c4be722dc46":"dR402","570b54ead3349ba8":"2gSp4"}],"5JFC5":[function(require,module,exports,__globalThis) {
 "use strict";
 // Android Devices on KitKat use Chromium based webviews. For some reason,
 // the value of the inputs are not accessible in the event loop where the
@@ -2074,7 +2275,7 @@ var KitKatChromiumBasedWebViewStrategy = /** @class */ function(_super) {
 }(android_chrome_1.AndroidChromeStrategy);
 exports.KitKatChromiumBasedWebViewStrategy = KitKatChromiumBasedWebViewStrategy;
 
-},{"825dffb36ce60b0f":"6xmWb"}],"1MWrj":[function(require,module,exports) {
+},{"825dffb36ce60b0f":"6xmWb"}],"1MWrj":[function(require,module,exports,__globalThis) {
 "use strict";
 var __extends = this && this.__extends || function() {
     var extendStatics = function(d, b) {
@@ -2181,7 +2382,7 @@ var IE9Strategy = /** @class */ function(_super) {
 }(base_1.BaseStrategy);
 exports.IE9Strategy = IE9Strategy;
 
-},{"b0eb3b16a61e16ca":"dR402","2ee95935e0e5a1d0":"cbCy3","2a33819b3cc5c8ee":"2gSp4"}],"fl4aQ":[function(require,module,exports) {
+},{"b0eb3b16a61e16ca":"dR402","2ee95935e0e5a1d0":"cbCy3","2a33819b3cc5c8ee":"2gSp4"}],"fl4aQ":[function(require,module,exports,__globalThis) {
 "use strict";
 var __extends = this && this.__extends || function() {
     var extendStatics = function(d, b) {
@@ -2223,14 +2424,14 @@ var NoopKeyboardStrategy = /** @class */ function(_super) {
 }(strategy_interface_1.StrategyInterface);
 exports.NoopKeyboardStrategy = NoopKeyboardStrategy;
 
-},{"69678c37e1e62446":"eR489"}],"grWkP":[function(require,module,exports) {
+},{"69678c37e1e62446":"eR489"}],"grWkP":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _airDatepicker = require("./air-datepicker");
 var _airDatepickerDefault = parcelHelpers.interopDefault(_airDatepicker);
 exports.default = (0, _airDatepickerDefault.default);
 
-},{"./air-datepicker":"9hsv2","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9hsv2":[function(require,module,exports) {
+},{"./air-datepicker":"9hsv2","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9hsv2":[function(require,module,exports,__globalThis) {
 !function(e, t) {
     module.exports = t();
 }(this, function() {
@@ -2249,7 +2450,7 @@ exports.default = (0, _airDatepickerDefault.default);
         }, t = {};
         e.d(t, {
             default: function() {
-                return B;
+                return R;
             }
         });
         var i = {
@@ -2369,6 +2570,7 @@ exports.default = (0, _airDatepickerDefault.default);
             monthsField: "monthsShort",
             showEvent: "focus",
             autoClose: !1,
+            fixedHeight: !1,
             prevHtml: '<svg><path d="M 17,12 l -5,5 l 5,5"></path></svg>',
             nextHtml: '<svg><path d="M 14,12 l 5,5 l -5,5"></path></svg>',
             navTitles: {
@@ -2406,10 +2608,10 @@ exports.default = (0, _airDatepickerDefault.default);
             for (let [i, s] of Object.entries(t))void 0 !== s && e.setAttribute(i, s);
             return e;
         }
-        function h(e) {
+        function o(e) {
             return new Date(e.getFullYear(), e.getMonth() + 1, 0).getDate();
         }
-        function o(e) {
+        function h(e) {
             let t = e.getHours(), { hours: i, dayPeriod: s } = l(t);
             return {
                 year: e.getFullYear(),
@@ -2454,7 +2656,7 @@ exports.default = (0, _airDatepickerDefault.default);
         function p(e, t) {
             let s = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : i.days;
             if (!e || !t) return !1;
-            let a = o(e), n = o(t);
+            let a = h(e), n = h(t);
             return ({
                 [i.days]: a.date === n.date && a.month === n.month && a.year === n.year,
                 [i.months]: a.month === n.month && a.year === n.year,
@@ -2496,7 +2698,7 @@ exports.default = (0, _airDatepickerDefault.default);
         }
         function b(e) {
             let t = e;
-            return e instanceof Date || (t = new Date(e)), isNaN(t.getTime()) && (console.log(`Unable to convert value "${e}" to Date object`), t = !1), t;
+            return e instanceof Date || ("string" == typeof e && /^\d{4}-\d{2}-\d{2}$/.test(e) && (e += "T00:00:00"), t = new Date(e)), isNaN(t.getTime()) && (console.log(`Unable to convert value "${e}" to Date object`), t = !1), t;
         }
         function k(e) {
             let t = "\\s|\\.|-|/|\\\\|,|\\$|\\!|\\?|:|;";
@@ -2539,15 +2741,16 @@ exports.default = (0, _airDatepickerDefault.default);
                     if (!e) return void (this.focused && this.removeFocus());
                     let t = p(e, this.date, this.type);
                     t ? this.focus() : !t && this.focused && this.removeFocus(), this.opts.range && this._handleRangeStatus();
-                }), $(this, "render", ()=>(this.$cell.innerHTML = this._getHtml(), this.$cell.adpCell = this, this.$cell)), this.type = e, this.singleType = this.type.slice(0, -1), this.date = t, this.dp = i, this.opts = s, this.body = a, this.customData = !1, this.init();
+                }), $(this, "render", ()=>(this.$cell.innerHTML = this._getHtml(), this._handleClasses(), this.$cell)), this.type = e, this.singleType = this.type.slice(0, -1), this.date = t, this.dp = i, this.opts = s, this.body = a, this.customData = !1, this.init();
             }
             init() {
-                let { range: e, onRenderCell: t } = this.opts;
+                var e;
+                let { onRenderCell: t } = this.opts;
                 t && (this.customData = t({
                     date: this.date,
                     cellType: this.singleType,
                     datepicker: this.dp
-                })), this._createElement(), this._bindDatepickerEvents(), this._handleInitialFocusStatus(), this.dp.hasSelectedDates && (this._handleSelectedStatus(), e && this._handleRangeStatus());
+                })), this._createElement(), this._bindDatepickerEvents(), null !== (e = this.customData) && void 0 !== e && e.disabled && this.dp.disableDate(this.date);
             }
             _bindDatepickerEvents() {
                 this.dp.on(i.eventChangeSelectedDate, this.onChangeSelectedDate), this.dp.on(i.eventChangeFocusDate, this.onChangeFocusDate);
@@ -2557,48 +2760,47 @@ exports.default = (0, _airDatepickerDefault.default);
             }
             _createElement() {
                 var e;
-                let { year: t, month: i, date: s } = o(this.date), a = (null === (e = this.customData) || void 0 === e ? void 0 : e.attrs) || {};
+                let { year: t, month: i, date: s } = h(this.date), a = (null === (e = this.customData) || void 0 === e ? void 0 : e.attrs) || {};
                 this.$cell = n({
-                    className: this._getClassName(),
                     attrs: {
                         "data-year": t,
                         "data-month": i,
                         "data-date": s,
                         ...a
                     }
-                });
+                }), this.$cell.adpCell = this;
             }
             _getClassName() {
-                var e, t;
-                let s = new Date, { selectOtherMonths: a, selectOtherYears: n } = this.opts, { minDate: r, maxDate: h } = this.dp, { day: l } = o(this.date), d = this._isOutOfMinMaxRange(), c = null === (e = this.customData) || void 0 === e ? void 0 : e.disabled, m = u("air-datepicker-cell", `-${this.singleType}-`, {
-                    "-current-": p(s, this.date, this.type),
-                    "-min-date-": r && p(r, this.date, this.type),
-                    "-max-date-": h && p(h, this.date, this.type)
+                var e;
+                let t = new Date, { selectOtherMonths: s, selectOtherYears: a } = this.opts, { minDate: n, maxDate: r, isDateDisabled: o } = this.dp, { day: l } = h(this.date), d = this._isOutOfMinMaxRange(), c = o(this.date), m = u("air-datepicker-cell", `-${this.singleType}-`, {
+                    "-current-": p(t, this.date, this.type),
+                    "-min-date-": n && p(n, this.date, this.type),
+                    "-max-date-": r && p(r, this.date, this.type)
                 }), v = "";
                 switch(this.type){
                     case i.days:
                         v = u({
                             "-weekend-": this.dp.isWeekend(l),
                             "-other-month-": this.isOtherMonth,
-                            "-disabled-": this.isOtherMonth && !a || d || c
+                            "-disabled-": this.isOtherMonth && !s || d || c
                         });
                         break;
                     case i.months:
                         v = u({
-                            "-disabled-": d || c
+                            "-disabled-": d
                         });
                         break;
                     case i.years:
                         v = u({
                             "-other-decade-": this.isOtherDecade,
-                            "-disabled-": d || this.isOtherDecade && !n || c
+                            "-disabled-": d || this.isOtherDecade && !a
                         });
                 }
-                return u(m, v, null === (t = this.customData) || void 0 === t ? void 0 : t.classes);
+                return u(m, v, null === (e = this.customData) || void 0 === e ? void 0 : e.classes).split(" ");
             }
             _getHtml() {
                 var e;
-                let { year: t, month: s, date: a } = o(this.date), { showOtherMonths: n, showOtherYears: r } = this.opts;
+                let { year: t, month: s, date: a } = h(this.date), { showOtherMonths: n, showOtherYears: r } = this.opts;
                 if (null !== (e = this.customData) && void 0 !== e && e.html) return this.customData.html;
                 switch(this.type){
                     case i.days:
@@ -2610,20 +2812,27 @@ exports.default = (0, _airDatepickerDefault.default);
                 }
             }
             _isOutOfMinMaxRange() {
-                let { minDate: e, maxDate: t } = this.dp, { type: s, date: a } = this, { month: n, year: r, date: h } = o(a), l = s === i.days, d = s === i.years, c = !!e && new Date(r, d ? e.getMonth() : n, l ? h : e.getDate()), u = !!t && new Date(r, d ? t.getMonth() : n, l ? h : t.getDate());
+                let { minDate: e, maxDate: t } = this.dp, { type: s, date: a } = this, { month: n, year: r, date: o } = h(a), l = s === i.days, d = s === i.years, c = !!e && new Date(r, d ? e.getMonth() : n, l ? o : e.getDate()), u = !!t && new Date(r, d ? t.getMonth() : n, l ? o : t.getDate());
                 return e && t ? v(c, e) || m(u, t) : e ? v(c, e) : t ? m(u, t) : void 0;
             }
             destroy() {
                 this.unbindDatepickerEvents();
             }
             _handleRangeStatus() {
-                let { rangeDateFrom: e, rangeDateTo: t } = this.dp, i = u({
-                    "-in-range-": e && t && (s = this.date, a = e, n = t, m(s, a) && v(s, n)),
-                    "-range-from-": e && p(this.date, e, this.type),
-                    "-range-to-": t && p(this.date, t, this.type)
+                const { selectedDates: e, focusDate: t, rangeDateTo: i, rangeDateFrom: s } = this.dp, a = e.length;
+                if (!a) return;
+                let n = s, r = i;
+                if (1 === a && t) {
+                    const i = m(t, e[0]);
+                    n = i ? e[0] : t, r = i ? t : e[0];
+                }
+                let o = u({
+                    "-in-range-": n && r && (h = this.date, l = n, d = r, m(h, l) && v(h, d)),
+                    "-range-from-": n && p(this.date, n, this.type),
+                    "-range-to-": r && p(this.date, r, this.type)
                 });
-                var s, a, n;
-                this.$cell.classList.remove("-range-from-", "-range-to-", "-in-range-"), i && this.$cell.classList.add(...i.split(" "));
+                var h, l, d;
+                this.$cell.classList.remove("-range-from-", "-range-to-", "-in-range-"), o && this.$cell.classList.add(...o.split(" "));
             }
             _handleSelectedStatus() {
                 let e = this.dp._checkIfDateIsSelected(this.date, this.type);
@@ -2631,6 +2840,9 @@ exports.default = (0, _airDatepickerDefault.default);
             }
             _handleInitialFocusStatus() {
                 p(this.dp.focusDate, this.date, this.type) && this.focus();
+            }
+            _handleClasses() {
+                this.$cell.setAttribute("class", ""), this._handleInitialFocusStatus(), this.dp.hasSelectedDates && (this._handleSelectedStatus(), this.dp.opts.range && this._handleRangeStatus()), this.$cell.classList.add(...this._getClassName());
             }
             get isDisabled() {
                 return this.$cell.matches(".-disabled-");
@@ -2705,11 +2917,11 @@ exports.default = (0, _airDatepickerDefault.default);
                     let { date: r } = i;
                     if (2 === s.length) {
                         if (this.rangeFromFocused && !m(r, a)) {
-                            let { hours: e, minutes: t } = o(n);
+                            let { hours: e, minutes: t } = h(n);
                             r.setHours(e), r.setMinutes(t), this.dp.rangeDateFrom = r, this.dp.replaceDate(n, r);
                         }
                         if (this.rangeToFocused && !v(r, n)) {
-                            let { hours: e, minutes: t } = o(a);
+                            let { hours: e, minutes: t } = h(a);
                             r.setHours(e), r.setMinutes(t), this.dp.rangeDateTo = r, this.dp.replaceDate(a, r);
                         }
                     }
@@ -2793,18 +3005,19 @@ exports.default = (0, _airDatepickerDefault.default);
                 this.destroyCells(), this.dp.off(i.eventChangeViewDate, this.onChangeViewDate), this.dp.off(i.eventChangeCurrentView, this.onChangeCurrentView);
             }
             static getDaysDates(e, t) {
-                let { viewDate: i, locale: { firstDay: s } } = e, a = h(i), { year: n, month: r } = o(i), l = new Date(n, r, 1), d = new Date(n, r, a), c = l.getDay() - s, u = 6 - d.getDay() + s;
-                c = c < 0 ? c + 7 : c, u = u > 6 ? u - 7 : u;
-                let p = function(e, t) {
-                    let { year: i, month: s, date: a } = o(e);
+                let { viewDate: i, opts: { fixedHeight: s }, locale: { firstDay: a } } = e, n = o(i), { year: r, month: l } = h(i), d = new Date(r, l, 1), c = new Date(r, l, n), u = d.getDay() - a, p = 6 - c.getDay() + a;
+                u = u < 0 ? u + 7 : u, p = p > 6 ? p - 7 : p;
+                let m = function(e, t) {
+                    let { year: i, month: s, date: a } = h(e);
                     return new Date(i, s, a - t);
-                }(l, c), m = a + c + u, v = p.getDate(), { year: g, month: D } = o(p), y = 0;
-                const f = [];
-                for(; y < m;){
-                    let e = new Date(g, D, v + y);
-                    t && t(e), f.push(e), y++;
+                }(d, u), v = n + u + p, g = m.getDate(), { year: D, month: y } = h(m), f = 0;
+                s && (v = 42);
+                const w = [];
+                for(; f < v;){
+                    let e = new Date(D, y, g + f);
+                    t && t(e), w.push(e), f++;
                 }
-                return f;
+                return w;
             }
             static getMonthsDates(e, t) {
                 let { year: i } = e.parsedViewDate, s = 0, a = [];
@@ -2906,18 +3119,18 @@ exports.default = (0, _airDatepickerDefault.default);
             handleNavStatus() {
                 let { disableNavWhenOutOfRange: e } = this.opts, { minDate: t, maxDate: s } = this.dp;
                 if (!t && !s || !e) return;
-                let { year: a, month: n } = this.dp.parsedViewDate, r = !!t && o(t), h = !!s && o(s);
+                let { year: a, month: n } = this.dp.parsedViewDate, r = !!t && h(t), o = !!s && h(s);
                 switch(this.dp.currentView){
                     case i.days:
-                        t && r.month >= n && r.year >= a && this._disableNav("prev"), s && h.month <= n && h.year <= a && this._disableNav("next");
+                        t && r.month >= n && r.year >= a && this._disableNav("prev"), s && o.month <= n && o.year <= a && this._disableNav("next");
                         break;
                     case i.months:
-                        t && r.year >= a && this._disableNav("prev"), s && h.year <= a && this._disableNav("next");
+                        t && r.year >= a && this._disableNav("prev"), s && o.year <= a && this._disableNav("next");
                         break;
                     case i.years:
                         {
                             let e = c(this.dp.viewDate);
-                            t && r.year >= e[0] && this._disableNav("prev"), s && h.year <= e[1] && this._disableNav("next");
+                            t && r.year >= e[0] && this._disableNav("prev"), s && o.year <= e[1] && this._disableNav("next");
                             break;
                         }
                 }
@@ -3068,8 +3281,8 @@ exports.default = (0, _airDatepickerDefault.default);
                 this.dp.off(i.eventChangeSelectedDate, this.onChangeSelectedDate), this.dp.off(i.eventChangeLastSelectedDate, this.onChangeLastSelectedDate), this.$el.parentNode.removeChild(this.$el);
             }
             buildHtml() {
-                let { ampm: e, hours: t, displayHours: i, minutes: s, minHours: a, minMinutes: n, maxHours: r, maxMinutes: h, dayPeriod: o, opts: { hoursStep: l, minutesStep: c } } = this;
-                this.$el.innerHTML = `<div class="air-datepicker-time--current">   <span class="air-datepicker-time--current-hours">${d(i)}</span>   <span class="air-datepicker-time--current-colon">:</span>   <span class="air-datepicker-time--current-minutes">${d(s)}</span>   ` + (e ? `<span class='air-datepicker-time--current-ampm'>${o}</span>` : "") + '</div><div class="air-datepicker-time--sliders">   <div class="air-datepicker-time--row">' + `      <input type="range" name="hours" value="${t}" min="${a}" max="${r}" step="${l}"/>   </div>   <div class="air-datepicker-time--row">` + `      <input type="range" name="minutes" value="${s}" min="${n}" max="${h}" step="${c}"/>   </div></div>`;
+                let { ampm: e, hours: t, displayHours: i, minutes: s, minHours: a, minMinutes: n, maxHours: r, maxMinutes: o, dayPeriod: h, opts: { hoursStep: l, minutesStep: c } } = this;
+                this.$el.innerHTML = `<div class="air-datepicker-time--current">   <span class="air-datepicker-time--current-hours">${d(i)}</span>   <span class="air-datepicker-time--current-colon">:</span>   <span class="air-datepicker-time--current-minutes">${d(s)}</span>   ` + (e ? `<span class='air-datepicker-time--current-ampm'>${h}</span>` : "") + '</div><div class="air-datepicker-time--sliders">   <div class="air-datepicker-time--row">' + `      <input type="range" name="hours" value="${t}" min="${a}" max="${r}" step="${l}"/>   </div>   <div class="air-datepicker-time--row">` + `      <input type="range" name="minutes" value="${s}" min="${n}" max="${o}" step="${c}"/>   </div></div>`;
             }
             defineDOM() {
                 let e = (e)=>a(e, this.$el);
@@ -3088,7 +3301,7 @@ exports.default = (0, _airDatepickerDefault.default);
                 }
             }
             setCurrentTime(e) {
-                let { hours: t, minutes: i } = e ? o(e) : this;
+                let { hours: t, minutes: i } = e ? h(e) : this;
                 this.hours = f(t, this.minHours, this.maxHours), this.minutes = f(i, this.minMinutes, this.maxMinutes);
             }
             setMinMaxTimeFromOptions() {
@@ -3238,9 +3451,9 @@ exports.default = (0, _airDatepickerDefault.default);
                         (e, t)=>t.up()
                     ]
                 ])), O(this, "handleHotKey", (e)=>{
-                    let t = this.hotKeys.get(e), i = o(this.getInitialFocusDate());
+                    let t = this.hotKeys.get(e), i = h(this.getInitialFocusDate());
                     t(i, this.dp);
-                    let { year: s, month: a, date: n } = i, r = h(new Date(s, a));
+                    let { year: s, month: a, date: n } = i, r = o(new Date(s, a));
                     r < n && (n = r);
                     let l = this.dp.getClampedDate(new Date(s, a, n));
                     this.dp.setFocusDate(l, {
@@ -3303,7 +3516,7 @@ exports.default = (0, _airDatepickerDefault.default);
                 return r;
             }
             focusNextCell(e) {
-                let t = this.getInitialFocusDate(), { currentView: s } = this.dp, { days: a, months: n, years: r } = i, h = o(t), l = h.year, d = h.month, c = h.date;
+                let t = this.getInitialFocusDate(), { currentView: s } = this.dp, { days: a, months: n, years: r } = i, o = h(t), l = o.year, d = o.month, c = o.date;
                 switch(e){
                     case "ArrowLeft":
                         s === a && (c -= 1), s === n && (d -= 1), s === r && (l -= 1);
@@ -3368,10 +3581,10 @@ exports.default = (0, _airDatepickerDefault.default);
                 writable: !0
             }) : e[t] = i, e;
         }
-        let P = "", j = "", R = !1;
-        class B {
+        let P = "", j = "", B = !1;
+        class R {
             static buildGlobalContainer(e) {
-                R = !0, P = n({
+                B = !0, P = n({
                     className: e,
                     id: e
                 }), a("body").appendChild(P);
@@ -3417,17 +3630,17 @@ exports.default = (0, _airDatepickerDefault.default);
                         isViewChange: t,
                         done: r._finishHide
                     }));
-                    let i, s, { isMobile: a } = r.opts, n = r.$el.getBoundingClientRect(), h = r.$el.getBoundingClientRect(), o = r.$datepicker.offsetParent, l = r.$el.offsetParent, d = r.$datepicker.getBoundingClientRect(), c = e.split(" "), u = window.scrollY, p = window.scrollX, m = r.opts.offset, v = c[0], g = c[1];
+                    let i, s, { isMobile: a } = r.opts, n = r.$el.getBoundingClientRect(), o = r.$el.getBoundingClientRect(), h = r.$datepicker.offsetParent, l = r.$el.offsetParent, d = r.$datepicker.getBoundingClientRect(), c = e.split(" "), u = window.scrollY, p = window.scrollX, m = r.opts.offset, v = c[0], g = c[1];
                     if (a) r.$datepicker.style.cssText = "left: 50%; top: 50%";
                     else {
-                        if (o === l && o !== document.body && (h = {
+                        if (h === l && h !== document.body && (o = {
                             top: r.$el.offsetTop,
                             left: r.$el.offsetLeft,
                             width: n.width,
                             height: r.$el.offsetHeight
-                        }, u = 0, p = 0), o !== l && o !== document.body) {
-                            let e = o.getBoundingClientRect();
-                            h = {
+                        }, u = 0, p = 0), h !== l && h !== document.body) {
+                            let e = h.getBoundingClientRect();
+                            o = {
                                 top: n.top - e.top,
                                 left: n.left - e.left,
                                 width: n.width,
@@ -3436,32 +3649,32 @@ exports.default = (0, _airDatepickerDefault.default);
                         }
                         switch(v){
                             case "top":
-                                i = h.top - d.height - m;
+                                i = o.top - d.height - m;
                                 break;
                             case "right":
-                                s = h.left + h.width + m;
+                                s = o.left + o.width + m;
                                 break;
                             case "bottom":
-                                i = h.top + h.height + m;
+                                i = o.top + o.height + m;
                                 break;
                             case "left":
-                                s = h.left - d.width - m;
+                                s = o.left - d.width - m;
                         }
                         switch(g){
                             case "top":
-                                i = h.top;
+                                i = o.top;
                                 break;
                             case "right":
-                                s = h.left + h.width - d.width;
+                                s = o.left + o.width - d.width;
                                 break;
                             case "bottom":
-                                i = h.top + h.height - d.height;
+                                i = o.top + o.height - d.height;
                                 break;
                             case "left":
-                                s = h.left;
+                                s = o.left;
                                 break;
                             case "center":
-                                /left|right/.test(v) ? i = h.top + h.height / 2 - d.height / 2 : s = h.left + h.width / 2 - d.width / 2;
+                                /left|right/.test(v) ? i = o.top + o.height / 2 - d.height / 2 : s = o.left + o.width / 2 - d.width / 2;
                         }
                         r.$datepicker.style.cssText = `left: ${s + p}px; top: ${i + u}px`;
                     }
@@ -3504,37 +3717,59 @@ exports.default = (0, _airDatepickerDefault.default);
                     this.trigger(i.eventChangeViewDate, e, t);
                 }), I(this, "setFocusDate", function(e) {
                     let t = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : {};
-                    (!e || (e = b(e)) instanceof Date) && (r.focusDate = e, r.opts.range && e && r._handleRangeOnFocus(), r.trigger(i.eventChangeFocusDate, e, t));
-                }), I(this, "setCurrentView", (e)=>{
-                    if (this.viewIndexes.includes(e)) {
-                        if (this.currentView = e, this.elIsInput && this.visible && this.setPosition(void 0, !0), this.trigger(i.eventChangeCurrentView, e), !this.views[e]) {
-                            let t = this.views[e] = new T({
-                                dp: this,
-                                opts: this.opts,
+                    (!e || (e = b(e)) instanceof Date) && (r.focusDate = e, r.trigger(i.eventChangeFocusDate, e, t));
+                }), I(this, "setCurrentView", function(e) {
+                    let t = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : {};
+                    if (r.viewIndexes.includes(e)) {
+                        if (r.currentView = e, r.elIsInput && r.visible && r.setPosition(void 0, !0), r.trigger(i.eventChangeCurrentView, e), !r.views[e]) {
+                            let t = r.views[e] = new T({
+                                dp: r,
+                                opts: r.opts,
                                 type: e
                             });
-                            this.shouldUpdateDOM && this.$content.appendChild(t.$el);
+                            r.shouldUpdateDOM && r.$content.appendChild(t.$el);
                         }
-                        this.opts.onChangeView && this.opts.onChangeView(e);
+                        r.opts.onChangeView && !t.silent && r.opts.onChangeView(e);
                     }
                 }), I(this, "_updateLastSelectedDate", (e)=>{
                     this.lastSelectedDate = e, this.trigger(i.eventChangeLastSelectedDate, e);
                 }), I(this, "destroy", ()=>{
+                    if (this.isDestroyed) return;
                     let { showEvent: e, isMobile: t } = this.opts, i = this.$datepicker.parentNode;
-                    i && i.removeChild(this.$datepicker), this.$el.removeEventListener(e, this._onFocus), this.$el.removeEventListener("blur", this._onBlur), window.removeEventListener("resize", this._onResize), t && this._removeMobileAttributes(), this.keyboardNav && this.keyboardNav.destroy(), this.views = null, this.nav = null, this.$datepicker = null, this.opts = null, this.$customContainer = null, this.viewDate = null, this.focusDate = null, this.selectedDates = null, this.rangeDateFrom = null, this.rangeDateTo = null;
+                    i && i.removeChild(this.$datepicker), this.$el.removeEventListener(e, this._onFocus), this.$el.removeEventListener("blur", this._onBlur), window.removeEventListener("resize", this._onResize), t && this._removeMobileAttributes(), this.keyboardNav && this.keyboardNav.destroy(), this.views = null, this.nav = null, this.$datepicker = null, this.opts = {}, this.$customContainer = null, this.viewDate = null, this.focusDate = null, this.selectedDates = [], this.rangeDateFrom = null, this.rangeDateTo = null, this.isDestroyed = !0;
                 }), I(this, "update", function() {
-                    let e = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {}, t = w({}, r.opts);
+                    let e = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : {}, t = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : {}, s = w({}, r.opts), { silent: a } = t;
                     w(r.opts, e);
-                    let { timepicker: s, buttons: a, range: n, selectedDates: h, isMobile: o } = r.opts, l = r.visible || r.treatAsInline;
-                    r._createMinMaxDates(), r._limitViewDateByMaxMinDates(), r._handleLocale(), !t.selectedDates && h && r.selectDate(h), e.view && r.setCurrentView(e.view), r._setInputValue(), t.range && !n ? (r.rangeDateTo = !1, r.rangeDateFrom = !1) : !t.range && n && r.selectedDates.length && (r.rangeDateFrom = r.selectedDates[0], r.rangeDateTo = r.selectedDates[1]), t.timepicker && !s ? (l && r.timepicker.destroy(), r.timepicker = !1, r.$timepicker.parentNode.removeChild(r.$timepicker)) : !t.timepicker && s && r._addTimepicker(), !t.buttons && a ? r._addButtons() : t.buttons && !a ? (r.buttons.destroy(), r.$buttons.parentNode.removeChild(r.$buttons)) : l && t.buttons && a && r.buttons.clearHtml().render(), !t.isMobile && o ? (r.treatAsInline || j || r._createMobileOverlay(), r._addMobileAttributes(), r.visible && r._showMobileOverlay()) : t.isMobile && !o && (r._removeMobileAttributes(), r.visible && (j.classList.remove("-active-"), "function" != typeof r.opts.position && r.setPosition())), l && (r.nav.update(), r.views[r.currentView].render(), r.currentView === i.days && r.views[r.currentView].renderDayNames());
+                    let { timepicker: n, buttons: o, range: h, selectedDates: l, isMobile: d } = r.opts, c = r.visible || r.treatAsInline;
+                    r._createMinMaxDates(), r._limitViewDateByMaxMinDates(), r._handleLocale(), l && (r.selectedDates = [], r.selectDate(l, {
+                        silent: a
+                    })), e.view && r.setCurrentView(e.view, {
+                        silent: a
+                    }), r._setInputValue(), s.range && !h ? (r.rangeDateTo = !1, r.rangeDateFrom = !1) : !s.range && h && r.selectedDates.length && (r.rangeDateFrom = r.selectedDates[0], r.rangeDateTo = r.selectedDates[1]), s.timepicker && !n ? (c && r.timepicker.destroy(), r.timepicker = !1, r.$timepicker.parentNode.removeChild(r.$timepicker)) : !s.timepicker && n && r._addTimepicker(), !s.buttons && o ? r._addButtons() : s.buttons && !o ? (r.buttons.destroy(), r.$buttons.parentNode.removeChild(r.$buttons)) : c && s.buttons && o && r.buttons.clearHtml().render(), !s.isMobile && d ? (r.treatAsInline || j || r._createMobileOverlay(), r._addMobileAttributes(), r.visible && r._showMobileOverlay()) : s.isMobile && !d && (r._removeMobileAttributes(), r.visible && (j.classList.remove("-active-"), "function" != typeof r.opts.position && r.setPosition())), c && (r.nav.update(), r.views[r.currentView].render(), r.currentView === i.days && r.views[r.currentView].renderDayNames());
+                }), I(this, "disableDate", (e, t)=>{
+                    (Array.isArray(e) ? e : [
+                        e
+                    ]).forEach((e)=>{
+                        let i = b(e);
+                        if (!i) return;
+                        let s = t ? "delete" : "add";
+                        this.disabledDates[s](this.formatDate(i, "yyyy-MM-dd"));
+                        let a = this.getCell(i, this.currentViewSingular);
+                        a && a.adpCell.render();
+                    }, []);
+                }), I(this, "enableDate", (e)=>{
+                    this.disableDate(e, !0);
+                }), I(this, "isDateDisabled", (e)=>{
+                    let t = b(e);
+                    return this.disabledDates.has(this.formatDate(t, "yyyy-MM-dd"));
                 }), I(this, "isOtherMonth", (e)=>{
-                    let { month: t } = o(e);
+                    let { month: t } = h(e);
                     return t !== this.parsedViewDate.month;
                 }), I(this, "isOtherYear", (e)=>{
-                    let { year: t } = o(e);
+                    let { year: t } = h(e);
                     return t !== this.parsedViewDate.year;
                 }), I(this, "isOtherDecade", (e)=>{
-                    let { year: t } = o(e), [i, s] = c(this.viewDate);
+                    let { year: t } = h(e), [i, s] = c(this.viewDate);
                     return t < i || t > s;
                 }), I(this, "_onChangeSelectedDate", (e)=>{
                     let { silent: t } = e;
@@ -3552,8 +3787,8 @@ exports.default = (0, _airDatepickerDefault.default);
                 }), I(this, "_onChangeTime", (e)=>{
                     let { hours: t, minutes: i } = e, s = new Date, { lastSelectedDate: a, opts: { onSelect: n } } = this, r = a;
                     a || (r = s);
-                    let h = this.getCell(r, this.currentViewSingular), o = h && h.adpCell;
-                    o && o.isDisabled || (r.setHours(t), r.setMinutes(i), a ? (this._setInputValue(), n && this._triggerOnSelect()) : this.selectDate(r));
+                    let o = this.getCell(r, this.currentViewSingular), h = o && o.adpCell;
+                    h && h.isDisabled || (r.setHours(t), r.setMinutes(i), a ? (this._setInputValue(), n && this._triggerOnSelect()) : this.selectDate(r));
                 }), I(this, "_onFocus", (e)=>{
                     this.visible || this.show();
                 }), I(this, "_onBlur", (e)=>{
@@ -3576,12 +3811,12 @@ exports.default = (0, _airDatepickerDefault.default);
                 this.$datepicker = n({
                     className: "air-datepicker"
                 }), this.opts = w({}, s, t), this.$customContainer = !!this.opts.container && a(this.opts.container), this.$altField = a(this.opts.altField || !1);
-                let { view: h, startDate: l } = this.opts;
-                l || (this.opts.startDate = new Date), "INPUT" === this.$el.nodeName && (this.elIsInput = !0), this.inited = !1, this.visible = !1, this.viewDate = b(this.opts.startDate), this.focusDate = !1, this.initialReadonly = this.$el.getAttribute("readonly"), this.customHide = !1, this.currentView = h, this.selectedDates = [], this.views = {}, this.keys = [], this.rangeDateFrom = "", this.rangeDateTo = "", this.timepickerIsActive = !1, this.treatAsInline = this.opts.inline || !this.elIsInput, this.init();
+                let { view: o, startDate: l } = this.opts;
+                l || (this.opts.startDate = new Date), "INPUT" === this.$el.nodeName && (this.elIsInput = !0), this.inited = !1, this.visible = !1, this.viewDate = b(this.opts.startDate), this.focusDate = !1, this.initialReadonly = this.$el.getAttribute("readonly"), this.customHide = !1, this.currentView = o, this.selectedDates = [], this.disabledDates = new Set, this.isDestroyed = !1, this.views = {}, this.keys = [], this.rangeDateFrom = "", this.rangeDateTo = "", this.timepickerIsActive = !1, this.treatAsInline = this.opts.inline || !this.elIsInput, this.init();
             }
             init() {
-                let { opts: e, treatAsInline: t, opts: { inline: i, isMobile: s, selectedDates: n, keyboardNav: r, onlyTimepicker: h } } = this, o = a("body");
-                (!R || R && P && !o.contains(P)) && !i && this.elIsInput && !this.$customContainer && B.buildGlobalContainer(B.defaultGlobalContainerId), !s || j || t || this._createMobileOverlay(), this._handleLocale(), this._bindSubEvents(), this._createMinMaxDates(), this._limitViewDateByMaxMinDates(), this.elIsInput && (i || this._bindEvents(), r && !h && (this.keyboardNav = new A({
+                let { opts: e, treatAsInline: t, opts: { inline: i, isMobile: s, selectedDates: n, keyboardNav: r, onlyTimepicker: o } } = this, h = a("body");
+                (!B || B && P && !h.contains(P)) && !i && this.elIsInput && !this.$customContainer && R.buildGlobalContainer(R.defaultGlobalContainerId), !s || j || t || this._createMobileOverlay(), this._handleLocale(), this._bindSubEvents(), this._createMinMaxDates(), this._limitViewDateByMaxMinDates(), this.elIsInput && (i || this._bindEvents(), r && !o && (this.keyboardNav = new A({
                     dp: this,
                     opts: e
                 }))), n && this.selectDate(n, {
@@ -3594,8 +3829,8 @@ exports.default = (0, _airDatepickerDefault.default);
                 }), P.appendChild(j);
             }
             _createComponents() {
-                let { opts: e, treatAsInline: t, opts: { inline: i, buttons: s, timepicker: a, position: n, classes: r, onlyTimepicker: h, isMobile: o } } = this;
-                this._buildBaseHtml(), this.elIsInput && (i || this._setPositionClasses(n)), !i && this.elIsInput || this.$datepicker.classList.add("-inline-"), r && this.$datepicker.classList.add(...r.split(" ")), h && this.$datepicker.classList.add("-only-timepicker-"), o && !t && this._addMobileAttributes(), this.views[this.currentView] = new T({
+                let { opts: e, treatAsInline: t, opts: { inline: i, buttons: s, timepicker: a, position: n, classes: r, onlyTimepicker: o, isMobile: h } } = this;
+                this._buildBaseHtml(), this.elIsInput && (i || this._setPositionClasses(n)), !i && this.elIsInput || this.$datepicker.classList.add("-inline-"), r && this.$datepicker.classList.add(...r.split(" ")), o && this.$datepicker.classList.add("-only-timepicker-"), h && !t && this._addMobileAttributes(), this.views[this.currentView] = new T({
                     dp: this,
                     type: this.currentView,
                     opts: e
@@ -3644,14 +3879,14 @@ exports.default = (0, _airDatepickerDefault.default);
             }
             _handleLocale() {
                 let { locale: e, dateFormat: t, firstDay: i, timepicker: s, onlyTimepicker: a, timeFormat: n, dateTimeSeparator: r } = this.opts;
-                var h;
-                this.locale = (h = e, JSON.parse(JSON.stringify(h))), t && (this.locale.dateFormat = t), void 0 !== n && "" !== n && (this.locale.timeFormat = n);
-                let { timeFormat: o } = this.locale;
+                var o;
+                this.locale = (o = e, JSON.parse(JSON.stringify(o))), t && (this.locale.dateFormat = t), void 0 !== n && "" !== n && (this.locale.timeFormat = n);
+                let { timeFormat: h } = this.locale;
                 if ("" !== i && (this.locale.firstDay = i), s && "function" != typeof t) {
-                    let e = o ? r : "";
+                    let e = h ? r : "";
                     this.locale.dateFormat = [
                         this.locale.dateFormat,
-                        o || ""
+                        h || ""
                     ].join(e);
                 }
                 a && "function" != typeof t && (this.locale.dateFormat = this.locale.timeFormat);
@@ -3671,7 +3906,7 @@ exports.default = (0, _airDatepickerDefault.default);
             formatDate() {
                 let e = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : this.viewDate, t = arguments.length > 1 ? arguments[1] : void 0;
                 if (e = b(e), !(e instanceof Date)) return;
-                let i = t, s = this.locale, a = o(e), n = a.dayPeriod, r = c(e), h = B.replacer, l = {
+                let i = t, s = this.locale, a = h(e), n = a.dayPeriod, r = c(e), o = R.replacer, l = {
                     T: e.getTime(),
                     m: a.minutes,
                     mm: a.fullMinutes,
@@ -3694,7 +3929,7 @@ exports.default = (0, _airDatepickerDefault.default);
                     yyyy1: r[0],
                     yyyy2: r[1]
                 };
-                for (let [e, t] of Object.entries(l))i = h(i, k(e), t);
+                for (let [e, t] of Object.entries(l))i = o(i, k(e), t);
                 return i;
             }
             down(e) {
@@ -3704,7 +3939,7 @@ exports.default = (0, _airDatepickerDefault.default);
                 this._handleUpDownActions(e, "up");
             }
             selectDate(e) {
-                let t, s = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : {}, { currentView: a, parsedViewDate: n, selectedDates: r } = this, { updateTime: h } = s, { moveToOtherMonthsOnSelect: o, moveToOtherYearsOnSelect: l, multipleDates: d, range: c, autoClose: u, onBeforeSelect: p } = this.opts, v = r.length;
+                let t, s = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : {}, { currentView: a, parsedViewDate: n, selectedDates: r } = this, { updateTime: o } = s, { moveToOtherMonthsOnSelect: h, moveToOtherYearsOnSelect: l, multipleDates: d, range: c, autoClose: u, onBeforeSelect: p } = this.opts, v = r.length;
                 if (Array.isArray(e)) return e.forEach((e)=>{
                     this.selectDate(e, s);
                 }), new Promise((e)=>{
@@ -3715,7 +3950,7 @@ exports.default = (0, _airDatepickerDefault.default);
                         date: e,
                         datepicker: this
                     })) return Promise.resolve();
-                    if (a === i.days && e.getMonth() !== n.month && o && (t = new Date(e.getFullYear(), e.getMonth(), 1)), a === i.years && e.getFullYear() !== n.year && l && (t = new Date(e.getFullYear(), 0, 1)), t && this.setViewDate(t), d && !c) {
+                    if (a === i.days && e.getMonth() !== n.month && h && (t = new Date(e.getFullYear(), e.getMonth(), 1)), a === i.years && e.getFullYear() !== n.year && l && (t = new Date(e.getFullYear(), 0, 1)), t && this.setViewDate(t), d && !c) {
                         if (v === d) return;
                         this._checkIfDateIsSelected(e) || r.push(e);
                     } else if (c) switch(v){
@@ -3742,7 +3977,7 @@ exports.default = (0, _airDatepickerDefault.default);
                         action: i.actionSelectDate,
                         silent: null == s ? void 0 : s.silent,
                         date: e,
-                        updateTime: h
+                        updateTime: o
                     }), this._updateLastSelectedDate(e), u && !this.timepickerIsActive && this.visible && (d || c ? c && 1 === v && this.hide() : this.hide()), new Promise((e)=>{
                         setTimeout(e);
                     });
@@ -3751,7 +3986,7 @@ exports.default = (0, _airDatepickerDefault.default);
             unselectDate(e) {
                 let t = this.selectedDates, s = this;
                 if ((e = b(e)) instanceof Date) return t.some((a, n)=>{
-                    if (p(a, e)) return t.splice(n, 1), s.selectedDates.length ? s._updateLastSelectedDate(s.selectedDates[s.selectedDates.length - 1]) : (s.rangeDateFrom = "", s.rangeDateTo = "", s._updateLastSelectedDate(!1)), this.trigger(i.eventChangeSelectedDate, {
+                    if (p(a, e)) return t.splice(n, 1), s.selectedDates.length ? (s.rangeDateTo = "", s.rangeDateFrom = t[0], s._updateLastSelectedDate(s.selectedDates[s.selectedDates.length - 1])) : (s.rangeDateFrom = "", s.rangeDateTo = "", s._updateLastSelectedDate(!1)), this.trigger(i.eventChangeSelectedDate, {
                         action: i.actionUnselectDate,
                         date: e
                     }), !0;
@@ -3785,38 +4020,34 @@ exports.default = (0, _airDatepickerDefault.default);
                 }), t && j.classList.remove("-active-");
             }
             _triggerOnSelect() {
-                let e = [], t = [], { selectedDates: i, locale: s, opts: { onSelect: a, multipleDates: n, range: r } } = this, h = n || r, o = "function" == typeof s.dateFormat;
-                i.length && (e = i.map(g), t = o ? n ? s.dateFormat(e) : e.map((e)=>s.dateFormat(e)) : e.map((e)=>this.formatDate(e, s.dateFormat))), a({
-                    date: h ? e : e[0],
-                    formattedDate: h ? t : t[0],
+                let e = [], t = [], { selectedDates: i, locale: s, opts: { onSelect: a, multipleDates: n, range: r } } = this, o = n || r, h = "function" == typeof s.dateFormat;
+                i.length && (e = i.map(g), t = h ? n ? s.dateFormat(e) : e.map((e)=>s.dateFormat(e)) : e.map((e)=>this.formatDate(e, s.dateFormat))), a({
+                    date: o ? e : e[0],
+                    formattedDate: o ? t : t[0],
                     datepicker: this
                 });
             }
             _handleAlreadySelectedDates(e, t) {
-                const { range: i, toggleSelected: s } = this.opts;
-                let a = "function" == typeof s ? s({
+                let { selectedDates: i, rangeDateFrom: s, rangeDateTo: a } = this, { range: n, toggleSelected: r } = this.opts, o = i.length, h = "function" == typeof r ? r({
                     datepicker: this,
                     date: t
-                }) : s;
-                i && (a || 2 !== this.selectedDates.length && this.selectDate(t)), a ? this.unselectDate(t) : this._updateLastSelectedDate(e);
+                }) : r, l = Boolean(n && 1 === o && e), d = l ? g(t) : t;
+                n && !h && (2 !== o && this.selectDate(d), 2 === o && p(s, a)) || (h ? this.unselectDate(d) : this._updateLastSelectedDate(l ? d : e));
             }
             _handleUpDownActions(e, t) {
                 if (!((e = b(e || this.focusDate || this.viewDate)) instanceof Date)) return;
                 let i = "up" === t ? this.viewIndex + 1 : this.viewIndex - 1;
                 i > 2 && (i = 2), i < 0 && (i = 0), this.setViewDate(new Date(e.getFullYear(), e.getMonth(), 1)), this.setCurrentView(this.viewIndexes[i]);
             }
-            _handleRangeOnFocus() {
-                1 === this.selectedDates.length && (m(this.selectedDates[0], this.focusDate) ? (this.rangeDateTo = this.selectedDates[0], this.rangeDateFrom = this.focusDate) : (this.rangeDateTo = this.focusDate, this.rangeDateFrom = this.selectedDates[0]));
-            }
             getCell(e) {
                 let t = arguments.length > 1 && void 0 !== arguments[1] ? arguments[1] : i.day;
                 if (!((e = b(e)) instanceof Date)) return;
-                let { year: s, month: a, date: n } = o(e), r = `[data-year="${s}"]`, h = `[data-month="${a}"]`, l = {
-                    [i.day]: `${r}${h}[data-date="${n}"]`,
-                    [i.month]: `${r}${h}`,
+                let { year: s, month: a, date: n } = h(e), r = `[data-year="${s}"]`, o = `[data-month="${a}"]`, l = {
+                    [i.day]: `${r}${o}[data-date="${n}"]`,
+                    [i.month]: `${r}${o}`,
                     [i.year]: `${r}`
                 };
-                return this.views[this.currentView].$el.querySelector(l[t]);
+                return this.views[this.currentView] ? this.views[this.currentView].$el.querySelector(l[t]) : void 0;
             }
             _showMobileOverlay() {
                 j.classList.add("-active-");
@@ -3828,7 +4059,7 @@ exports.default = (0, _airDatepickerDefault.default);
                 return this.visible || this.treatAsInline;
             }
             get parsedViewDate() {
-                return o(this.viewDate);
+                return h(this.viewDate);
             }
             get currentViewSingular() {
                 return this.currentView.slice(0, -1);
@@ -3858,10 +4089,118 @@ exports.default = (0, _airDatepickerDefault.default);
             }
         }
         var K;
-        return I(B, "defaults", s), I(B, "version", "3.4.0"), I(B, "defaultGlobalContainerId", "air-datepicker-global-container"), K = B.prototype, Object.assign(K, N), t.default;
+        return I(R, "defaults", s), I(R, "version", "3.5.3"), I(R, "defaultGlobalContainerId", "air-datepicker-global-container"), K = R.prototype, Object.assign(K, N), t.default;
     }();
 });
 
-},{}]},["cygyY","2OpUZ"], "2OpUZ", "parcelRequireb2ea")
+},{}],"aSSob":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _redom = require("redom");
+var _createWarning = require("../create/createWarning");
+var _createWarningDefault = parcelHelpers.interopDefault(_createWarning);
+var _updateFieldState = require("./updateFieldState");
+var _updateFieldStateDefault = parcelHelpers.interopDefault(_updateFieldState);
+const validateCard = (form)=>{
+    const data = Object.fromEntries(new FormData(form));
+    console.log('data: ', data);
+    console.log("data-\u0442\u0438\u043F", typeof data);
+    let fieldsValidity = {};
+    for(const field in data){
+        if (field === 'owner') {
+            console.log("\u041F\u043E\u043B\u0435", data[field]);
+            const regExp = /([a-z]{2,})\s+([a-z]{2,})/i.test(data[field]);
+            if (regExp === false) {
+                const formElem = form.querySelector(`[name=${field}]`);
+                const warning = (0, _createWarningDefault.default)(field);
+                (0, _redom.mount)(formElem.parentElement, warning);
+                setTimeout(()=>{
+                    warning.remove();
+                }, 2000);
+                (0, _updateFieldStateDefault.default)(field, fieldsValidity, false);
+            } else if (regExp === true) (0, _updateFieldStateDefault.default)(field, fieldsValidity, true);
+        }
+        if (field === 'number') {
+            console.log("\u041F\u043E\u043B\u0435", data[field]);
+            const regExp = /(\d{4}\s{1}){3}(\d{4}){1}/.test(data[field]);
+            console.log('regExp-card: ', regExp);
+            if (regExp === false) {
+                const formElem = form.querySelector(`[name=${field}]`);
+                const warning = (0, _createWarningDefault.default)(field);
+                (0, _redom.mount)(formElem.parentElement, warning);
+                setTimeout(()=>{
+                    warning.remove();
+                }, 2000);
+                (0, _updateFieldStateDefault.default)(field, fieldsValidity, false);
+            } else if (regExp === true) (0, _updateFieldStateDefault.default)(field, fieldsValidity, true);
+        }
+        if (field === 'date') {
+            const regExp = /(\d{2})\/(\d{2})/.test(data[field]);
+            if (regExp === false) {
+                const formElem = form.querySelector(`[name=${field}]`);
+                const warning = (0, _createWarningDefault.default)(field);
+                (0, _redom.mount)(formElem.parentElement, warning);
+                setTimeout(()=>{
+                    warning.remove();
+                }, 2000);
+                (0, _updateFieldStateDefault.default)(field, fieldsValidity, false);
+            } else if (regExp === true) (0, _updateFieldStateDefault.default)(field, fieldsValidity, true);
+        }
+        if (field === 'cvv') {
+            const regExp = /\d{3}/.test(data[field]);
+            if (regExp === false) {
+                const formElem = form.querySelector(`[name=${field}]`);
+                const warning = (0, _createWarningDefault.default)(field);
+                (0, _redom.mount)(formElem.parentElement, warning);
+                setTimeout(()=>{
+                    warning.remove();
+                }, 2000);
+                (0, _updateFieldStateDefault.default)(field, fieldsValidity, false);
+            } else if (regExp === true) (0, _updateFieldStateDefault.default)(field, fieldsValidity, true);
+        }
+        if (data[field].length > 0) {
+            console.log("\u0418\u043C\u044F \u043F\u043E\u043B\u044F", field);
+            console.log("\u0417\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u043F\u043E\u043B\u044F", data[field]);
+            console.log(form);
+        // const formElem = form.querySelector(`[name=${field}]`);
+        // console.log('formElem: ', formElem.parentElement.style.border = '1px solid red');
+        // const warning = createWarning(field);
+        // mount(formElem.parentElement, warning)
+        // setTimeout(() => {
+        //   warning.remove();
+        // }, 2000);
+        }
+        console.log("\u0412\u0441\u0435 \u043F\u043E\u043B\u044F \u043F\u043E\u0441\u043B\u0435 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438", fieldsValidity);
+        console.log("\u0414\u043B\u0438\u043D\u0430 \u043F\u0440\u0438\u0445\u043E\u0434\u0430", Object.keys(data).length);
+    // console.log('Поле', field);
+    // console.log('Имя поля', data[field]);
+    }
+    if (Object.keys(data).length === Object.keys(fieldsValidity).length && Object.values(fieldsValidity).every((elem)=>elem === true)) console.log("\u0412\u0441\u0435 \u043F\u043E\u043B\u044F \u0432\u0430\u043B\u0438\u0434\u043D\u044B");
+    else console.log("\u043D\u0435 \u0432\u0441\u0435 \u043F\u043E\u043B\u044F \u0432\u0430\u043B\u0438\u0434\u043D\u044B");
+};
+exports.default = validateCard;
+
+},{"redom":"cWIuY","../create/createWarning":"jW2o6","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./updateFieldState":"8pHZX"}],"jW2o6":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _redom = require("redom");
+const createWarning = (text)=>{
+    const warning = (0, _redom.el)('h2', {
+        className: 'form__warning',
+        textContent: `\u{412}\u{432}\u{435}\u{434}\u{438}\u{442}\u{435} \u{432}\u{430}\u{43B}\u{438}\u{434}\u{43D}\u{44B}\u{435} \u{434}\u{430}\u{43D}\u{43D}\u{44B}\u{435} \u{432} \u{43F}\u{43E}\u{43B}\u{435} ${text}!`
+    });
+    return warning;
+};
+exports.default = createWarning;
+
+},{"redom":"cWIuY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8pHZX":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+const updateFieldState = (fieldName, obj, state)=>{
+    obj[fieldName] = state;
+};
+exports.default = updateFieldState;
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["faLUp","2OpUZ"], "2OpUZ", "parcelRequire94c2")
 
 //# sourceMappingURL=index.6690e0da.js.map

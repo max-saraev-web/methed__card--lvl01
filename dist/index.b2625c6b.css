@@ -417,33 +417,33 @@
   box-sizing: border-box;
   border: 1px solid var(--adp-time-track-color);
   cursor: pointer;
+  width: 12px;
+  height: 12px;
   transition: background var(--adp-transition-duration);
   background: #fff;
   border-radius: 3px;
-  width: 12px;
-  height: 12px;
 }
 
 .air-datepicker-time--row input[type="range"]::-moz-range-thumb {
   box-sizing: border-box;
   border: 1px solid var(--adp-time-track-color);
   cursor: pointer;
+  width: 12px;
+  height: 12px;
   transition: background var(--adp-transition-duration);
   background: #fff;
   border-radius: 3px;
-  width: 12px;
-  height: 12px;
 }
 
 .air-datepicker-time--row input[type="range"]::-ms-thumb {
   box-sizing: border-box;
   border: 1px solid var(--adp-time-track-color);
   cursor: pointer;
+  width: 12px;
+  height: 12px;
   transition: background var(--adp-transition-duration);
   background: #fff;
   border-radius: 3px;
-  width: 12px;
-  height: 12px;
 }
 
 .air-datepicker-time--row input[type="range"]::-webkit-slider-thumb {
@@ -745,6 +745,7 @@
   align-items: center;
   width: 365px;
   height: 190px;
+  min-height: 200px;
   margin-bottom: 30px;
   padding: 48px 25px 30px;
   display: flex;
@@ -871,6 +872,28 @@
   cursor: not-allowed;
 }
 
+.form__sendBtn {
+  margin-bottom: 14px;
+  transition: all .5s;
+}
+
+.form__warning {
+  color: tomato;
+  text-align: left;
+  width: 110%;
+  font-size: 12px;
+  font-weight: bold;
+  position: absolute;
+  bottom: 0;
+  transform: translateY(125%);
+}
+
+@media (width >= 1024px) {
+  .form__sendBtn:hover {
+    scale: 1.02;
+  }
+}
+
 .input__holder {
   padding: 19px 94px;
 }
@@ -896,5 +919,4 @@
   right: 0;
   transform: translateY(100%);
 }
-
 /*# sourceMappingURL=index.b2625c6b.css.map */
