@@ -4,8 +4,6 @@ import updateFieldState from "./updateFieldState";
 
 const validateCard = form => {
   const data = Object.fromEntries(new FormData(form));
-  console.log('data: ', data);
-  console.log('data-тип', typeof data);
   let fieldsValidity = {};
   for (const field in data) {
       if (field === 'owner') {
@@ -68,27 +66,13 @@ const validateCard = form => {
           updateFieldState(field, fieldsValidity, true);
         }
       }
-    if (data[field].length > 0) {
-      console.log('Имя поля', field);
-      console.log('Значение поля', data[field]);
-      console.log(form);
-      // const formElem = form.querySelector(`[name=${field}]`);
-      // console.log('formElem: ', formElem.parentElement.style.border = '1px solid red');
-      // const warning = createWarning(field);
-      // mount(formElem.parentElement, warning)
-      // setTimeout(() => {
-      //   warning.remove();
-      // }, 2000);
-    }
-      console.log('Все поля после проверки', fieldsValidity);
-      console.log('Длина прихода', Object.keys(data).length);
-    // console.log('Поле', field);
-    // console.log('Имя поля', data[field]);
   }
     if ((Object.keys(data).length === Object.keys(fieldsValidity).length) && Object.values(fieldsValidity).every(elem => elem === true)) {
       console.log('Все поля валидны');
+      return true;
     } else {
       console.log('не все поля валидны');
+      return false;
     }
 };
 

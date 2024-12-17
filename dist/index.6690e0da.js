@@ -652,74 +652,16 @@ const checkOutControl = (parent)=>{
         });
         picker.show();
     });
-    dateInput.addEventListener('blur', ({ target })=>{
-        target.value = target.value.replace(/\s/g, '/');
-        cardDate.textContent = target.value;
+    dateInput.addEventListener('input', ({ target })=>{
+        target.value = target.value.replace(/[^0-9/]/i, '');
+        target.value = target.value.slice(0, 5);
     });
     cvvInput.addEventListener('input', ({ target })=>{
         target.value = target.value.replace(/\D/, '');
         target.value = target.value.slice(0, 3);
     });
-    // const isDate = new Promise(resolve => {
-    //   dateInput.addEventListener('blur', ({target}) => {
-    //     target.value = target.value.replace(/\s/g, '/');
-    //     cardDate.textContent = target.value;
-    //     if (/(\d{2})\/(\d{2})/.test(target.value)) {
-    //       console.log('date - resolved');
-    //       resolve();
-    //     };
-    //   });
-    // });
-    // const isName = new Promise(resolve => {
-    //   let isTyping;
-    //   let isPending = true;
-    //   clearTimeout(isTyping);
-    //   const nameInput = owner.querySelector('input');
-    //   nameInput.addEventListener('input', ({target}) => {
-    //     const matrix = 'John Doe';
-    //     target.value = target.value.replace(/[^a-z\s]/gim, '');
-    //     cardName.textContent = target.value;
-    //     if (target.value.length === 0) cardName.textContent = matrix;
-    //     isTyping = setTimeout(() => {
-    //       if (/\w\s{1}\w/i.test(target.value) &&
-    //       isPending) {
-    //         isPending = false;
-    //         clearTimeout(isTyping);
-    //         resolve();
-    //       }
-    //     }, 7000);
-    //   });
-    // });
-    // const isNum = new Promise(resolve => {
-    //   numberInput.addEventListener('input', ({target}) => {
-    //     new CreditCardInputMask({
-    //       element: target,
-    //       pattern: '{{9999}} {{9999}} {{9999}} {{9999}}',
-    //     });
-    //     target.value = target.value + matrix.slice(target.value.length);
-    //     cardNum.textContent = target.value + matrix.slice(target.value.length);
-    //     if (/(\d{4}\s{1}){3}(\d{4}){1}/gim.test(target.value)) resolve();
-    //   });
-    // });
-    // const isCvv = new Promise(resolve => {
-    //   cvvInput.addEventListener('input', ({target}) => {
-    //     target.value = target.value.replace(/\D/, '');
-    //     target.value = target.value.slice(0, 3);
-    //     if (/\d{3}/.test(target.value)) resolve();
-    //   });
-    // });
-    // Promise.all([isDate, isName, isNum, isCvv])
-    //   .then(() => {
-    //     btn.disabled = false;
-    //   });
     formContainer.addEventListener('submit', (ev)=>{
         ev.preventDefault();
-        console.log("\u0412\u044B \u043F\u044B\u0442\u0430\u0435\u0442\u0435\u0441\u044C \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C \u0444\u043E\u0440\u043C\u0443, \u0443 \u0432\u0430\u0441 \u044D\u0442\u043E \u043D\u0435 \u0432\u044B\u0439\u0434\u0435\u0442!");
-    // console.log('123');
-    // const target = ev.target;
-    // const obj = new FormData(target);
-    // console.log(obj);
-    // validateCard(obj);
     });
     numberInput.addEventListener('input', (ev)=>{
         const target = ev.target;
@@ -732,8 +674,12 @@ const checkOutControl = (parent)=>{
     });
     sendBtn.addEventListener('click', (ev)=>{
         const target = ev.target;
-        // console.log(target);
-        (0, _validateCardDefault.default)(formContainer);
+        let validCard = (0, _validateCardDefault.default)(formContainer);
+        if (validCard === true) btn.disabled = false;
+        else btn.disabled = true;
+    });
+    formContainer.addEventListener('input', ()=>{
+        btn.disabled = true;
     });
     // ? вставка элементов
     (0, _redom.setChildren)(parent, p, card, formContainer);
@@ -4103,8 +4049,6 @@ var _updateFieldState = require("./updateFieldState");
 var _updateFieldStateDefault = parcelHelpers.interopDefault(_updateFieldState);
 const validateCard = (form)=>{
     const data = Object.fromEntries(new FormData(form));
-    console.log('data: ', data);
-    console.log("data-\u0442\u0438\u043F", typeof data);
     let fieldsValidity = {};
     for(const field in data){
         if (field === 'owner') {
@@ -4158,29 +4102,18 @@ const validateCard = (form)=>{
                 (0, _updateFieldStateDefault.default)(field, fieldsValidity, false);
             } else if (regExp === true) (0, _updateFieldStateDefault.default)(field, fieldsValidity, true);
         }
-        if (data[field].length > 0) {
-            console.log("\u0418\u043C\u044F \u043F\u043E\u043B\u044F", field);
-            console.log("\u0417\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u043F\u043E\u043B\u044F", data[field]);
-            console.log(form);
-        // const formElem = form.querySelector(`[name=${field}]`);
-        // console.log('formElem: ', formElem.parentElement.style.border = '1px solid red');
-        // const warning = createWarning(field);
-        // mount(formElem.parentElement, warning)
-        // setTimeout(() => {
-        //   warning.remove();
-        // }, 2000);
-        }
-        console.log("\u0412\u0441\u0435 \u043F\u043E\u043B\u044F \u043F\u043E\u0441\u043B\u0435 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438", fieldsValidity);
-        console.log("\u0414\u043B\u0438\u043D\u0430 \u043F\u0440\u0438\u0445\u043E\u0434\u0430", Object.keys(data).length);
-    // console.log('Поле', field);
-    // console.log('Имя поля', data[field]);
     }
-    if (Object.keys(data).length === Object.keys(fieldsValidity).length && Object.values(fieldsValidity).every((elem)=>elem === true)) console.log("\u0412\u0441\u0435 \u043F\u043E\u043B\u044F \u0432\u0430\u043B\u0438\u0434\u043D\u044B");
-    else console.log("\u043D\u0435 \u0432\u0441\u0435 \u043F\u043E\u043B\u044F \u0432\u0430\u043B\u0438\u0434\u043D\u044B");
+    if (Object.keys(data).length === Object.keys(fieldsValidity).length && Object.values(fieldsValidity).every((elem)=>elem === true)) {
+        console.log("\u0412\u0441\u0435 \u043F\u043E\u043B\u044F \u0432\u0430\u043B\u0438\u0434\u043D\u044B");
+        return true;
+    } else {
+        console.log("\u043D\u0435 \u0432\u0441\u0435 \u043F\u043E\u043B\u044F \u0432\u0430\u043B\u0438\u0434\u043D\u044B");
+        return false;
+    }
 };
 exports.default = validateCard;
 
-},{"redom":"cWIuY","../create/createWarning":"jW2o6","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./updateFieldState":"8pHZX"}],"jW2o6":[function(require,module,exports,__globalThis) {
+},{"redom":"cWIuY","../create/createWarning":"jW2o6","./updateFieldState":"8pHZX","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jW2o6":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _redom = require("redom");
