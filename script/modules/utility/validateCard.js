@@ -52,7 +52,7 @@ const validateCard = form => {
         }
       }
       if (field === 'cvv') {
-        const regExp = /\d{3}/.test(data[field]);
+        const regExp = /^\d{3}$/.test(data[field]);
 
         if (regExp === false) {
           const formElem = form.querySelector(`[name=${field}]`);
